@@ -7,11 +7,9 @@
                                         ;               Static                ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def show-add-form (r/atom false))
-
 (defn back-button []
   (let [click-handler
-        (fn [] (reset! show-add-form false))]
+        (fn [] (reset! help/show-add-form false))]
     [:div.back-button-container
      [:input {:type "button"
               :id "back-button"
@@ -134,7 +132,7 @@
 
 (defn plus-sign-component []
   (let [click-handler
-        (fn [] (reset! show-add-form true))]
+        (fn [] (reset! help/show-add-form true))]
     [:div.add-button-container
      [:input {:type "button"
               :id "plus-button"
@@ -142,10 +140,10 @@
               :on-click click-handler}]]))
 
 (defn heading-box []
-  (if (:login-success @help/user-state)
+  (if (:loggedIn @help/logged-in)
     [:div.logged-in-heading-container
-     {:style
-      {:opacity (if (:login-success @help/user-state) 1 0)}};fades in login effect
+     #_{:style
+      {:opacity (if (:loggedIn @help/logged-in) 1 0)}};fades in login effect
      [:h2 "Lor's Password Manager"]
      [:button {:id "logout-button"
                :on-click (fn []
@@ -217,18 +215,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn logged-in-view [profile-name]
-  (let [user (get-in @help/user-state [:users profile-name])
-        passwords (:passwords user)]
+  (let [passwords (@help/user-state :passwords)]
     [:div.main-container
      [heading-box]
      [:div 
-      (when (not @show-add-form)
+      (when (not @help/show-add-form)
         [:div
          [:h2 (str "Hello " profile-name ", you logged in at " (current-time))]
          [plus-sign-component]])
-      (when @show-add-form
+      (when @help/show-add-form
         [generation-form-box])
-      (when (and (not @show-add-form) (empty? passwords))
+      (when (and (not @help/show-add-form) (empty? passwords))
         [:div
          "You have no passwords yet"])
       [:ul
@@ -244,7 +241,7 @@
   (let [selected-file (r/atom nil)
         error-message (r/atom "")]
     (fn []
-      (if  (:login-success @help/user-state)
+      (if  (:loggedIn @help/logged-in)
         [logged-in-view  (:current-user @help/user-state)]
         [:div.main-container
          [heading-box]
@@ -258,10 +255,10 @@
               (if (and @selected-file (help/valid-login? profile-name password));authenticate user here
                 (do
                   (swap! @help/user-state assoc :current-user profile-name)
-                  (swap! @help/user-state assoc :login-success true)
+                  (reset! @help/logged-in {:loggedIn false})
                   (help/read-file @selected-file)) ; Assuming a function to process the CSV
                 (reset! error-message "Invalid profile-name or password"))))]
-         (when (not (:login-success @help/user-state))
+         (when (not (:loggedIn @help/logged-in))
            [:div.error-message @error-message])]))))
 
 (defn login-page []
