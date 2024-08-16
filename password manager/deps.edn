@@ -1,16 +1,34 @@
-{:deps {org.clojure/clojure {:mvn/version "1.11.4"}
-        org.clojure/clojurescript {:mvn/version "1.11.132"}
+{:deps {buddy/buddy-auth {:mvn/version "3.0.323"
+                          :exclusions [buddy/buddy-core]}
+        buddy/buddy-hashers {:mvn/version "2.0.167"}
+        cljs-ajax/cljs-ajax {:mvn/version "0.8.4"}
+        org.clojure/tools.logging {:mvn/version "1.3.0"}
         org.clojure/data.json {:mvn/version "2.4.0"}
-        org.clojure/data.csv {:mvn/version "1.0.1"}
-        org.clojure/test.check {:mvn/version "1.1.1"}
-        cljsjs/react {:mvn/version "18.2.0-1"}
-        cljsjs/react-dom {:mvn/version "18.2.0-1"}
-        cljs-ajax/cljs-ajax {:mvn/version "0.7.5"}
-        cljs-http/cljs-http {:mvn/version "0.1.48"}
+        com.bhauman/figwheel-main {:mvn/version "0.2.18"
+                                   :exclusions [ring/ring
+                                                org.eclipse.jetty.websocket/websocket-servlet
+                                                org.eclipse.jetty/jetty-server
+                                                org.eclipse.jetty/jetty-websocket
+                                                org.eclipse.jetty/jetty-util
+                                                org.eclipse.jetty/jetty-io
+                                                org.eclipse.jetty/jetty-http
+                                                org.eclipse.jetty/jetty-servlet
+                                                org.eclipse.jetty/jetty-webapp
+                                                org.eclipse.jetty/jetty-security
+                                                org.eclipse.jetty/jetty-xml
+                                                org.eclipse.jetty.websocket/websocket-server
+                                                org.eclipse.jetty.websocket/websocket-common
+                                                org.eclipse.jetty.websocket/websocket-api]}
+        compojure/compojure {:mvn/version "1.7.1"}
+        thheller/shadow-cljs {:mvn/version "2.28.10"
+                              :exclusions [com.fasterxml.jackson.core/jackson-core]}
         reagent/reagent {:mvn/version "1.2.0"}
-        thheller/shadow-cljs {:mvn/version "2.28.10"}
-        buddy/buddy-hashers {:mvn/version "2.0.167"}}
+        ring/ring {:mvn/version "1.12.2"
+                   :exclusions [commons-codec/commons-codec
+                                org.slf4j/slf4j-nop]}
+        ring/ring-json {:mvn/version "0.5.1"}}
  :paths ["src"]
  :aliases
- {:dev {:extra-deps {com.bhauman/figwheel-main {:mvn/version "0.2.18"}}
-         :main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}}}
+ {:prod {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
+  :dev {:extra-paths ["dev"]
+        :extra-deps {ring/ring-devel {:mvn/version "1.12.2"}}}}}

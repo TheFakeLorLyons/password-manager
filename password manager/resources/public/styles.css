@@ -1,56 +1,78 @@
 /*containers*/
 
 body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    background: radial-gradient(rgba(41, 12, 53, 0.156),rgba(19, 5, 26, 0.766) 78%);
-    background-color: #290c35;
-    font-family: Cambria;
-    font-size: var(--font-size-base);
-    color: #d5def5d4;
- }
- .main-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 75vh;
-    margin-bottom: 25vh; /* Full viewport height */
-  }
-  .directory-container {
-    display: flex;
-    text-align: center;
-    align-items: center;
-    justify-content: center;
-    background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 70%);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: fit-content;
- }
- .login-container {
-    text-align: center;
-    background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 78%);
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 100%;
-    max-width: 30%;
- }
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  background: radial-gradient(rgba(41, 12, 53, 0.156),rgba(19, 5, 26, 0.766) 78%);
+  background-color: #290c35;
+  font-family: Cambria;
+  font-size: var(--font-size-base);
+  color: #d5def5d4;
+}
+.main-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 75vh;
+  margin-bottom: 25vh; /* Full viewport height */
+}
+.directory-container {
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 70%);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: fit-content;
+}
+.input-field-container {
+  text-align: center;
+  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 78%);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 30%;
+}
+.generation-input-field-container {
+  text-align: center;
+  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 78%);
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 30%;
+  max-width: 25%;
+}
 /* Styling for the heading box */
 .heading-container {
-    text-align: center;
-    border-radius: 8px;
-    padding-right: 30px;
-    padding-left: 30px;
-    background: radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 70%);
-    box-sizing: border-box;
-  }
-  .selected-csv-path-container {
+  text-align: center;
+  border-radius: 8px;
+  padding-right: 30px;
+  padding-left: 30px;
+  background: radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 70%);
+  box-sizing: border-box;
+}
+.logged-in-heading-container {
+  display: flex;
+  gap: 18vw;
+  text-align: center;
+  border-radius: 8px;
+  padding-right: 30px;
+  padding-left: 30px;
+  max-width: 100%;
+  background: radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 70%);
+  box-sizing: border-box;
+  margin-bottom: 3vh;
+  transition: "opacity 2s ease";
+}
+/*Path Directory Button on Login Page*/
+.selected-csv-path-container {
     display: inline-block;
     padding: 20px;
     border-radius: 8px;
@@ -58,7 +80,61 @@ body {
     width: 100%;
     max-width: 100%;
     border: none;
- }  
+}  
+
+.add-button-container {
+  width: 30px;
+  height: 30px;
+  border: 2px solid #000;
+  border-radius: 10%;
+  cursor: pointer;
+  margin: 20px;
+}
+.add-button-container:hover {
+  background-color: #b5b8d39d;  
+}
+#back-button {
+  transform: translate(20vh, 0vh);
+}
+.generation-container {
+  display: flex;
+  justify-content: center; /* Center columns horizontally */
+  align-items: center; /* Center columns vertically */
+  width: 70vw;
+  gap: 2vw;
+  transform: translate(6.5vw, 0vh);
+}
+.pw-generation-header{
+  text-align: center;
+}
+.center-generation-table{
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  margin-top: 4vh;
+  width: 75px;
+  margin-right: 10vw;
+}
+.right-generation-column {
+  align-items: center;
+  width: 25vw;
+}
+.pw-generation-header {
+  transform: translate(0vw, -5vh);
+}
+/*Error messages if improper login*/
+.error-message {
+  display: none; /* Hide by default */
+  color: red;
+}
+.error-message.visible {
+  display: block; /* Show when the class is applied */
+}
+.error-message p {
+  margin: 0; /* Remove default paragraph margin */
+}
+
+
 form { 
     display: flex;
     flex-direction: column;
@@ -112,9 +188,15 @@ form {
     border: 1px solid #ddd;
     border-radius: 4px;
     box-sizing: border-box;
+    font-family: Cambria;
+    background: #fffefb99;
+ }
+ input[type="text"]:focus,
+ input[type="password"]:focus {
+   background: #fffefbfb;
  }
  input[type="submit"] {
-    background-color: #d5def5d4;
+    background-color: #ede9f6f3;
     color: #290c35;
     border: none;
     padding: 3px;
@@ -124,24 +206,90 @@ form {
     font-size: 16px;
     cursor: pointer;
     border-radius: 4px;
+    font-family: Cambria;
  }
  input[type="submit"]:hover {
     background-color: #b5b8d39d;
  }
+#caccount-button {
+  background-color: #ede9f6f3;
+  color: #290c35;
+  border: none;
+  padding: 1px;
+  align-self: center;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: Cambria;
+  max-width: 30%;
+}
+#caccount-button:hover {
+  background-color: #b5b8d39d;
+}
+#logout-button {
+  background-color: #ede9f6f3;
+  color: #290c35;
+  border: none;
+  padding: 3px;
+  align-self: center;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: Cambria;
+  max-width: 30%;
+}
+#logout-button:hover {
+ background-color: #b5b8d39d;
+}
+#back-button {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: Arial;
+  padding-right: 10px;
+  padding-left: 10px;
+  color: hsl(274, 48%, 34%);
+  margin-bottom: 30px;
+  margin-right: 35vh;
+}
+#plus-button {
+  font-size: 20px;
+  font-weight: 800;
+  font-family: Arial;
+  padding-right: 10px;
+  padding-left: 10px;
+  color: hsl(274, 48%, 34%);
+}
+#generate-pw-button,
+button {
+  background-color: #d5def5d4;
+  color: #290c35;
+  border: none;
+  text-decoration: none;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: Cambria;
+}
+#generate-pw-button:hover,
+button:hover {
+  background-color: #b5b8d39d;  
+}
 
 
 
- button {
-    background-color: #d5def5d4;
-    color: #290c35;
-    border: none;
-    text-decoration: none;
-    font-size: 14px;
-    white-space: nowrap;
-    cursor: pointer;
-    border-radius: 4px;
- }
 
- button:hover {
-    background-color: #b5b8d39d;  
- }
+ .cursor-effect {
+   position: absolute;
+   border-radius: 50%;
+   pointer-events: none;
+   mix-blend-mode: multiply;
+   transition: background-color 1s ease;
+   z-index: 1000;
+}
