@@ -2,17 +2,18 @@
   (:require [compojure.core :refer [defroutes POST GET DELETE]]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
+            [ring.middleware.session :refer [wrap-session]]
+            [ring.middleware.session.cookie :refer [cookie-store]]
+            [ring.middleware.file :refer (wrap-file)]
             [ring.middleware.cors :refer [wrap-cors]]
             [clojure.data.json :as cjson]
             [LPM.clj.user :as usr]
-            [LPM.clj.pwfuncs :as pwf]
-            [clojure.tools.logging :as log]))
+            [LPM.clj.pwfuncs :as pwf]))
 
 (defroutes app-routes
   (POST "/create-account" {:keys [body]}
     (let [profile-name (:userProfileName body)
           login-password (:userLoginPassword body)]
-      (log/info "L->Handling account creation..." body)
       (usr/on-create-account profile-name login-password)
       {:status 200
        :headers {"Content-Type" "application/json"}
@@ -22,7 +23,6 @@
     (let [profile-name (:userProfileName body)
           login-password (:userLoginPassword body)
           passwords (:passwords body)]
-      (log/info "L->Handling password adding" body)
       (usr/add-new-password profile-name login-password passwords)
       {:status 200
        :headers {"Content-Type" "application/json"}
@@ -31,7 +31,6 @@
   (DELETE "/remove-a-password" {:keys [body]}
     (let [profile-name (:userProfileName body)
           pName (:pName body)]
-      (log/info "L->Handling password removal" body)
       (usr/remove-a-password profile-name pName)
       {:status 200
        :headers {"Content-Type" "application/json"}
@@ -43,7 +42,8 @@
 (def handler
   (-> app-routes
       (wrap-cors :access-control-allow-origin  #".*"
-                 :access-control-allow-methods [:get :post :options :delete])
+                 :access-control-allow-methods [:get :post :delete :options])
+      (wrap-session {:store (cookie-store)})
       (wrap-json-body)
       (wrap-json-response)))
 

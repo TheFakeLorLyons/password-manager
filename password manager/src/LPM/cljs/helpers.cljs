@@ -19,11 +19,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             HTTP Helpers            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def user-state (r/atom {:userProfileName "nil"
+(def user-state (r/atom {:userProfileName nil
                          :userLoginPassword nil
                          :passwords []}))
 
-(def logged-in (r/atom {:loggedIn true}));turn back to false to get normal operation
+(def logged-in (r/atom true));turn back to false to get normal operation
 
 (def show-add-form (r/atom true)); true to speed up to generation
 
@@ -31,12 +31,13 @@
   (reset! user-state {:userProfileName nil
                       :userLoginPassword nil
                       :passwords []})
-  (reset! logged-in {:loggedIn false}))
+  (reset! logged-in false))
 
 (defn valid-login? [profile-name login-password]
   false) ;L->Placeholder for actual implementation
 
 (defn create-account [profile-name login-password]
+  (js/console.log "Attempting to create account for:" profile-name)
   (ajax/POST "http://localhost:3000/create-account"
     {:params {:userProfileName profile-name
               :userLoginPassword login-password}
@@ -48,7 +49,7 @@
                 (swap! user-state assoc :userProfileName profile-name)
                 (swap! user-state assoc :userLoginPassword login-password)
                 (swap! user-state assoc :passwords [])
-                (reset! logged-in {:loggedIn true}))
+                (reset! logged-in true))
      :error-handler (fn [error]
                       (js/console.error "Failed to create account:" error))}))
 
@@ -89,12 +90,13 @@
 
 (defn generate-password-request [size]
   (let [url (str "http://localhost:3000/generate-a-password?size=" size)]
-    (ajax/GET url
-              {:response-format :json
-               :handler (fn [response]
-                          (js/console.log "Generated password:" (:password response)))
-               :error-handler (fn [error]
-                                (js/console.error "Failed to generate password:" error))})))
+    (js/Promise. (fn [resolve reject]
+                   (ajax/GET url
+                     {:response-format :json
+                      :handler (fn [response]
+                                 (resolve (:password response)))
+                      :error-handler (fn [error]
+                                       (reject error))})))))
 
 
 

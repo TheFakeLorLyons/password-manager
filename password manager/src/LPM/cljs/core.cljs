@@ -97,14 +97,17 @@
                 :on-click (fn [e]
                             (help/handle-add-new-password-submission e password-name password-content password-notes error-message))}]])))
 
-(defn center-generation-box [form-numChar form-numUpper form-perSpaces form-perSym generated-password]
+(defn center-generation-box [form-numChar form-numUpper form-perSpaces form-perSym password-content]
   [:div.center-generation-table
    [:input {:type "button"
             :id "generate-pw-button"
             :value "Generate PW!"
             :on-click (fn [e]
-                        (let [new-password (help/generate-password-request @form-numChar)]
-                          (reset! generated-password new-password)))}]])
+                        (-> (help/generate-password-request @form-numChar)
+                            (.then (fn [new-password]
+                                     (reset! password-content new-password)))
+                            (.catch (fn [error]
+                                      (js/console.error "Failed to generate password:" error)))))}]])
 
 (defn generation-form []
   (let [password-name (r/atom "")
@@ -113,8 +116,7 @@
         form-numChar (r/atom "")
         form-numUpper (r/atom "")
         form-perSpaces (r/atom "")
-        form-perSym (r/atom "")
-        generated-password (r/atom "")]
+        form-perSym (r/atom "")]
     [:div.back-button-container
      [back-button]
      [:div.pw-generation-header 
@@ -123,7 +125,7 @@
            right side properties."]
       [:div.generation-container
        [add-a-new-password-form password-name password-content password-notes]
-       [center-generation-box form-numChar form-numUpper form-perSpaces form-perSym generated-password]
+       [center-generation-box form-numChar form-numUpper form-perSpaces form-perSym password-content]
        [right-generation-column form-numChar form-numUpper form-perSpaces form-perSym]]]]))
 
 (defn generation-form-box []
@@ -156,7 +158,7 @@
               :on-click click-handler}]]))
 
 (defn heading-box []
-  (if (:loggedIn @help/logged-in)
+  (if @help/logged-in
     [:div.logged-in-heading-container
      #_{:style
       {:opacity (if (:loggedIn @help/logged-in) 1 0)}};fades in login effect
@@ -249,7 +251,7 @@
          (for [{:keys [pName pContent pNotes]} passwords]
            ^{:key pName}
            [:li.password-list (str "Name: " pName ", Content: " pContent ", Notes: " pNotes)
-            [delete-pw-component (@help/user-state :userProfileName) pName]])])]]))
+            [delete-pw-component (:userProfileName @help/user-state ) pName]])])]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 Frame               ;
@@ -259,8 +261,8 @@
   (let [selected-file (r/atom nil)
         error-message (r/atom "")]
     (fn []
-      (if  (:loggedIn @help/logged-in)
-        [logged-in-view  (:current-user @help/user-state)]
+      (if  @help/logged-in
+       [logged-in-view  (:current-user @help/user-state)]
         [:div.main-container
          [heading-box]
          [:h2 "Login"]
@@ -276,7 +278,7 @@
                   (reset! @help/logged-in {:loggedIn false})
                   (help/read-file @selected-file)) ;Where reading a file will take place
                 (reset! error-message "Invalid profile-name or password"))))]
-         (when (not (:loggedIn @help/logged-in))
+         (when (not @help/logged-in)
            [:div.error-message @error-message])]))))
 
 (defn login-page []
@@ -287,3 +289,18 @@
                (.getElementById js/document "app")))
 
 (start)
+
+
+(comment
+  ;TODOS
+  ;On-Login needs to require a path
+  ;Handle Validation/Authentification
+  ;Addpassword needs some methods
+  ;Encryption/Decrpytion
+  ;Update Passwords
+  ;Delete Passwords
+  ;Sort Passwords
+  ;Group Passwords
+  ;Password Hotkeys
+  ;Add default values to the add pw page
+  )

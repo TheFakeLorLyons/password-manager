@@ -15,7 +15,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn percentage [percent total]
-  (int (Math/round (* (/ percent 100) total))))
+  (int (Math/round (double (* (/ percent 100) total)))))
 
 (defn construct-regex [num-char per-u per-sym]
   (let [min-length 8
@@ -58,27 +58,18 @@
 
 
 
-(def my-schema (dynamic-word-schema 30 4 2 30))
-(def formatted-examples (generate-formatted-examples my-schema 10))
-(def examples (generate-custom-examples my-schema 10))
-
-(defn generate-n-examples [schema n]
-  (repeatedly n #(mg/generate schema)))
-
-
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ; Password Generation w/ spcec        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-;; Function to generate a secure random password
 (defn generate-password [length]
   (let [chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/"]
     (apply str
            (repeatedly length
                        #(rand-nth chars)))))
-
+(defn gen 
+  [size]
+  (generate-password size))
 ;; Function to add a new password entry
 (defn add-password [current-user profile-name]
   (println "Would you like to create your own password or generate one? (Enter 'create' or 'generate'):")
