@@ -89,9 +89,6 @@ body {
   cursor: pointer;
   margin: 20px;
 }
-.add-button-container:hover {
-  background-color: #b5b8d39d;  
-}
 #back-button {
   transform: translate(20vh, 0vh);
 }
@@ -122,7 +119,18 @@ body {
   transform: translate(0vw, -5vh);
 }
 .password-list {
+  font-size: 12pt;
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+.pw-list-options {
   display: flex;
+  justify-content: space-between;
+  
+}
+.pw-list-buttons {
+  display: flex;
+  gap: 10px;
 }
 /*Error messages if improper login*/
 .error-message {
@@ -284,7 +292,24 @@ button {
 button:hover {
   background-color: #b5b8d39d;  
 }
-
+#delete-pw-button {
+  padding-top: 0px;
+  padding-right: 3px;
+  font-weight: bold;
+  color: #781848;
+  cursor: pointer;
+  transform: translate(1vw, -0.2vh)
+}
+#copy-pw-button {
+  padding: 5px;
+  align-self: center;
+  padding-top: 0px;
+  padding-right: 4px;
+  background: #ede9f6f3;
+  color: hsl(274, 48%, 34%);
+  cursor: pointer;
+  transform: translate(1vw, -0.2vh)
+}
 
 
 

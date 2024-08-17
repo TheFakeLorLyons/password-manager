@@ -147,15 +147,18 @@
         (fn [] (help/remove-pw-request profile-name pName))]
     [:div.remove-button-container
      [:input {:type "button"
-              :id "delete-pw-component"
+              :id "delete-pw-button"
               :value "X"
-              :style {:padding-top "0px"
-                      :padding-right "4px"
-                      :font-style "bold"
-                      :color "#781848"
-                      :cursor "pointer"
-                      :transform "translate(1vw, -0.2vh)"}
               :on-click click-handler}]]))
+
+
+(defn copy-pw-components [pContent]
+  (let [text (r/atom pContent)]
+    (fn []
+       [:button
+        {:id "copy-pw-button"
+         :on-click #(help/copy-text-to-clipboard @text)}
+        "[]"])))
 
 (defn heading-box []
   (if @help/logged-in
@@ -250,8 +253,14 @@
         [:ul
          (for [{:keys [pName pContent pNotes]} passwords]
            ^{:key pName}
-           [:li.password-list (str "Name: " pName ", Content: " pContent ", Notes: " pNotes)
-            [delete-pw-component (:userProfileName @help/user-state ) pName]])])]]))
+           [:li.password-list
+            (str "Name: " pName)
+            [:div.pw-list-options
+             (str "PW Content: " pContent)
+             [:div.pw-list-buttons
+              [delete-pw-component (:userProfileName @help/user-state) pName]
+              [copy-pw-components pContent]]]
+            (str "Notes: " pNotes)])])]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 Frame               ;
@@ -289,3 +298,21 @@
                (.getElementById js/document "app")))
 
 (start)
+
+
+(comment
+  ;TODOS
+  ;On-Login needs to require a path
+  ;Handle Validation/Authentification
+  ;Addpassword needs some methods
+  ;Encryption/Decrpytion
+  ;Update Passwords
+  ;There should be a check to prevent multiple of the same password
+  ;improve the layout of the passwords on the login page
+     ;ie move the bullet point to the center item
+     ;make the copy edit buttons appear more nicely
+  ;Sort Passwords
+  ;Group Passwords
+  ;Password Hotkeys
+  ;Add default values to the add pw page
+  )

@@ -132,3 +132,15 @@
         (add-pw-request profile-name login-password @form-pName @form-pContent @form-pNotes)
         #_(reset! error-message "New password entered!"))
       (reset! error-message "All fields must be filled in"))))
+
+
+
+(defn copy-text-to-clipboard [pContent]
+  (let [textarea (js/document.createElement "textarea")]
+    (set! (.-value textarea) pContent)
+    (js/document.body.appendChild textarea)
+    (js/console.log "Copying text to clipboard...")
+    (.select textarea)
+    (js/document.execCommand "copy")
+    (js/document.body.removeChild textarea)
+    (js/console.log "Text copied to clipboard!")))
