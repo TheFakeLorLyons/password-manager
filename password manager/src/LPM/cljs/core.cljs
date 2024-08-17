@@ -16,11 +16,7 @@
               :value "<<"
               :on-click click-handler}]]))
 
-(defn right-generation-column []
-  (let [form-numChar (r/atom "")
-        form-numUpper (r/atom "")
-        form-perSpaces (r/atom "")
-        form-perSym (r/atom "")]
+(defn right-generation-column [form-numChar form-numUpper form-perSpaces form-perSym]
     (fn []
       [:form.generation-input-field-container
        {:style {:align-items "center"
@@ -65,13 +61,10 @@
                 :value @form-perSym
                 :on-change #(let [new-value (-> % .-target .-value)]
                                  (when (re-matches #"\d*" new-value)
-                                   (reset! form-perSym new-value)))}]])))
+                                   (reset! form-perSym new-value)))}]]))
 
-(defn add-a-new-password-form []
-  (let [password-name (r/atom "")
-        password-content (r/atom "")
-        password-notes (r/atom "")
-        error-message (r/atom "")]
+(defn add-a-new-password-form [password-name password-content password-notes]
+  (let [error-message (r/atom "")]
     (fn []
       [:form.generation-input-field-container ;change this from login container?
        [:h3 "Details"]
@@ -104,16 +97,24 @@
                 :on-click (fn [e]
                             (help/handle-add-new-password-submission e password-name password-content password-notes error-message))}]])))
 
-(defn center-generation-box []
+(defn center-generation-box [form-numChar form-numUpper form-perSpaces form-perSym generated-password]
   [:div.center-generation-table
    [:input {:type "button"
             :id "generate-pw-button"
             :value "Generate PW!"
-            #_#_:on-click (fn [e]
-                            (help/generate-pw e password-notes form-numUpper form-perSpaces form-perSym error-message))}]])
+            :on-click (fn [e]
+                        (let [new-password (help/generate-password-request @form-numChar)]
+                          (reset! generated-password new-password)))}]])
 
 (defn generation-form []
-  (let [password-notes (r/atom "")]
+  (let [password-name (r/atom "")
+        password-content (r/atom "")
+        password-notes (r/atom "")
+        form-numChar (r/atom "")
+        form-numUpper (r/atom "")
+        form-perSpaces (r/atom "")
+        form-perSym (r/atom "")
+        generated-password (r/atom "")]
     [:div.back-button-container
      [back-button]
      [:div.pw-generation-header 
@@ -121,9 +122,9 @@
       [:h3 "Manually enter your own password, or generate one based on the
            right side properties."]
       [:div.generation-container
-       [add-a-new-password-form]
-       [center-generation-box]
-       [right-generation-column]]]]))
+       [add-a-new-password-form password-name password-content password-notes]
+       [center-generation-box form-numChar form-numUpper form-perSpaces form-perSym generated-password]
+       [right-generation-column form-numChar form-numUpper form-perSpaces form-perSym]]]]))
 
 (defn generation-form-box []
   (let [hidden-container false]
@@ -137,6 +138,21 @@
      [:input {:type "button"
               :id "plus-button"
               :value "+"
+              :on-click click-handler}]]))
+
+(defn delete-pw-component [profile-name pName]
+  (let [click-handler
+        (fn [] (help/remove-pw-request profile-name pName))]
+    [:div.remove-button-container
+     [:input {:type "button"
+              :id "delete-pw-component"
+              :value "X"
+              :style {:padding-top "0px"
+                      :padding-right "4px"
+                      :font-style "bold"
+                      :color "#781848"
+                      :cursor "pointer"
+                      :transform "translate(1vw, -0.2vh)"}
               :on-click click-handler}]]))
 
 (defn heading-box []
@@ -218,7 +234,7 @@
   (let [passwords (@help/user-state :passwords)]
     [:div.main-container
      [heading-box]
-     [:div 
+     [:div
       (when (not @help/show-add-form)
         [:div
          [:h2 (str "Hello " profile-name ", you logged in at " (current-time))]
@@ -228,10 +244,12 @@
       (when (and (not @help/show-add-form) (empty? passwords))
         [:div
          "You have no passwords yet"])
-      [:ul
-       (for [{:keys [pName pContent pNotes]} passwords]
-         ^{:key pName}
-         [:li (str "Name: " pName ", Content: " pContent ", Notes: " pNotes)])]]]))
+      (when (not @help/show-add-form)
+        [:ul
+         (for [{:keys [pName pContent pNotes]} passwords]
+           ^{:key pName}
+           [:li.password-list (str "Name: " pName ", Content: " pContent ", Notes: " pNotes)
+            [delete-pw-component (@help/user-state :userProfileName) pName]])])]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 Frame               ;
@@ -256,7 +274,7 @@
                 (do
                   (swap! @help/user-state assoc :current-user profile-name)
                   (reset! @help/logged-in {:loggedIn false})
-                  (help/read-file @selected-file)) ; Assuming a function to process the CSV
+                  (help/read-file @selected-file)) ;Where reading a file will take place
                 (reset! error-message "Invalid profile-name or password"))))]
          (when (not (:loggedIn @help/logged-in))
            [:div.error-message @error-message])]))))
@@ -269,18 +287,3 @@
                (.getElementById js/document "app")))
 
 (start)
-
-
-(comment
-  ;TODOS
-  ;On-Login needs to require a path
-  ;Handle Validation/Authentification
-  ;Addpassword needs some methods
-  ;Encryption/Decrpytion
-  ;Update Passwords
-  ;Delete Passwords
-  ;Sort Passwords
-  ;Group Passwords
-  ;Password Hotkeys
-  ;Add default values to the add pw page
-  )

@@ -19,13 +19,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             HTTP Helpers            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def user-state (r/atom {:userProfileName nil
+(def user-state (r/atom {:userProfileName "nil"
                          :userLoginPassword nil
                          :passwords []}))
 
-(def logged-in (r/atom {:loggedIn false}))
+(def logged-in (r/atom {:loggedIn true}));turn back to false to get normal operation
 
-(def show-add-form (r/atom false))
+(def show-add-form (r/atom true)); true to speed up to generation
 
 (defn logout []
   (reset! user-state {:userProfileName nil
@@ -72,12 +72,36 @@
        :error-handler (fn [error]
                         (js/console.error "Failed to add password:" error))})))
 
+(defn remove-pw-request [profile-name pName]
+  (ajax/DELETE "http://localhost:3000/remove-a-password"
+    {:params {:userProfileName profile-name
+              :pName pName}
+     :headers {"Content-Type" "application/json"}
+     :format :json
+     :response-format :json
+     :handler (fn [response]
+                (js/console.log "Removed password:" response)
+                (swap! user-state update :passwords
+                       (fn [passwords]
+                         (remove #(= (:pName %) pName) passwords))))
+     :error-handler (fn [error]
+                      (js/console.error "Failed to remove password:" error))}))
+
+(defn generate-password-request [size]
+  (let [url (str "http://localhost:3000/generate-a-password?size=" size)]
+    (ajax/GET url
+              {:response-format :json
+               :handler (fn [response]
+                          (js/console.log "Generated password:" (:password response)))
+               :error-handler (fn [error]
+                                (js/console.error "Failed to generate password:" error))})))
+
+
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             HTML Helpers            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn remove-a-password [e profile-name passwordName error-message]
-  (.preventDefault e))
 
 (defn handle-login-submission [e profile-name login-password on-login error-message]
   (.preventDefault e)

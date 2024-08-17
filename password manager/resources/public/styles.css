@@ -69,7 +69,6 @@ body {
   background: radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 70%);
   box-sizing: border-box;
   margin-bottom: 3vh;
-  transition: "opacity 2s ease";
 }
 /*Path Directory Button on Login Page*/
 .selected-csv-path-container {
@@ -121,6 +120,9 @@ body {
 }
 .pw-generation-header {
   transform: translate(0vw, -5vh);
+}
+.password-list {
+  display: flex;
 }
 /*Error messages if improper login*/
 .error-message {
@@ -264,6 +266,7 @@ form {
   padding-right: 10px;
   padding-left: 10px;
   color: hsl(274, 48%, 34%);
+  cursor: pointer;
 }
 #generate-pw-button,
 button {
