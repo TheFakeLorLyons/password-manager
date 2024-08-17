@@ -92,7 +92,7 @@
   (let [url (str "http://localhost:3000/generate-a-password?size=" size)]
     (js/Promise. (fn [resolve reject]
                    (ajax/GET url
-                     {:response-format :json
+                     {:response-format (ajax/json-response-format {:keywords? true})
                       :handler (fn [response]
                                  (resolve (:password response)))
                       :error-handler (fn [error]

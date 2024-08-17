@@ -289,18 +289,3 @@
                (.getElementById js/document "app")))
 
 (start)
-
-
-(comment
-  ;TODOS
-  ;On-Login needs to require a path
-  ;Handle Validation/Authentification
-  ;Addpassword needs some methods
-  ;Encryption/Decrpytion
-  ;Update Passwords
-  ;Delete Passwords
-  ;Sort Passwords
-  ;Group Passwords
-  ;Password Hotkeys
-  ;Add default values to the add pw page
-  )

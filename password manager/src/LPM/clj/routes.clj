@@ -4,6 +4,7 @@
             [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.session.cookie :refer [cookie-store]]
+            [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.file :refer (wrap-file)]
             [ring.middleware.cors :refer [wrap-cors]]
             [clojure.data.json :as cjson]
@@ -18,7 +19,7 @@
       {:status 200
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "User created successfully"})}))
-  
+
   (POST "/add-a-new-password" {:keys [body]}
     (let [profile-name (:userProfileName body)
           login-password (:userLoginPassword body)
@@ -27,7 +28,7 @@
       {:status 200
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "L-> Password added successfully"})}))
-  
+
   (DELETE "/remove-a-password" {:keys [body]}
     (let [profile-name (:userProfileName body)
           pName (:pName body)]
@@ -35,12 +36,23 @@
       {:status 200
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "L-> Password removed successfully"})}))
-  
-  (GET "/generate-a-password" [size]
-    (pwf/generate-password size)))
+
+(GET "/generate-a-password" request
+  (let [size (try
+               (Integer/parseInt (get-in request [:params "size"]))
+               (catch Exception e
+                 nil))]
+    (if (and size (pos? size))
+      (let [password (pwf/generate-password size)]
+        {:status 200
+         :body {:password password
+                :message "Password generated successfully"}})
+      {:status 400
+       :body {:error "Invalid size parameter. Must be a positive integer."}}))))
 
 (def handler
   (-> app-routes
+      (wrap-params)
       (wrap-cors :access-control-allow-origin  #".*"
                  :access-control-allow-methods [:get :post :delete :options])
       (wrap-session {:store (cookie-store)})
