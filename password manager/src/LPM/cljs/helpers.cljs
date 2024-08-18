@@ -5,8 +5,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;              cljs-io                ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(def csv-content (r/atom nil))
 
-(defn read-file
+(defn read-file [file callback]
+  (let [reader (js/FileReader.)]
+    (set! (.-onload reader)
+          (fn [event]
+            (let [content (.. event -target -result)]
+              (callback content))))
+    (.readAsText reader file)))
+
+(defn handle-file-selection [file]
+  (read-file file
+             (fn [content]
+               (reset! csv-content content))))
+
+(defn alternative-read-file
   "Process the csv data"
   [file]
   (let [reader (js/FileReader.)]
@@ -23,9 +37,9 @@
                          :userLoginPassword nil
                          :passwords []}))
 
-(def logged-in (r/atom true));turn back to false to get normal operation
+(def logged-in (r/atom false));turn back to false to get normal operation
 
-(def show-add-form (r/atom true)); true to speed up to generation
+(def show-add-form (r/atom false)); true to speed up to generation
 
 (defn logout []
   (reset! user-state {:userProfileName nil
@@ -98,6 +112,22 @@
                       :error-handler (fn [error]
                                        (reject error))})))))
 
+(defn request-existing-csv [profile-name login-password]
+  (js/console.log "attempting to read csv:" @profile-name @login-password csv-content)
+  (ajax/POST "http://localhost:3000/request-existing-csv"
+    {:params {:userProfileName @profile-name
+              :userLoginPassword @login-password
+              :csvContent csv-content}
+     :headers {"Content-Type" "application/json"}
+     :format :json
+     :response-format :json
+     :handler (fn [response]
+                (let [passwords (:passwords response)]
+                  (js/console.log "Logged in successfully:" response)
+                  (swap! user-state conj :passwords conj passwords)
+                  (reset! logged-in true)))
+     :error-handler (fn [error]
+                      (js/console.error "Failed to add password:" error))}))
 
 
 
@@ -105,14 +135,26 @@
                                         ;             HTML Helpers            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn handle-login-submission [e profile-name login-password on-login error-message]
-  (.preventDefault e)
+(defn handle-login-submission [e profile-name login-password login error-message]
+  (if (and profile-name login-password (seq @profile-name) (seq @login-password))
+    (do
+      (println "Debug: profile-name =" @profile-name)
+      (println "Debug: login-password =" @login-password)
+      (println "Debug: login =" login)
+      (.preventDefault e))
+    (do
+      (reset! error-message "All fields must be filled in")
+      (println "Debug: Empty fields detected")))
   (if (and (seq @profile-name) (seq @login-password))
     (do
       (reset! error-message "")
-      (if (:loggedIn @user-state)
-        (on-login @profile-name @login-password);implemented
+
+      (if login
         (do
+          (request-existing-csv profile-name login-password)
+          (reset! logged-in true))
+        (do
+          (reset! logged-in true)
           (create-account @profile-name @login-password)
           #_(reset! error-message "Account created successfully"))))
     (reset! error-message "All fields must be filled in")))

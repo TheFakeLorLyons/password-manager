@@ -151,7 +151,6 @@
               :value "X"
               :on-click click-handler}]]))
 
-
 (defn copy-pw-components [pContent]
   (let [text (r/atom pContent)]
     (fn []
@@ -178,8 +177,8 @@
 (defn current-time []
   (.toLocaleString (js/Date.)))
 
-(defn directory-box []
-  (let [file (r/atom nil)
+(defn directory-box [selected-file]
+  (let [file (r/atom selected-file)
         file-name (r/atom "No file selected")]
     (fn []
       [:div.directory-container
@@ -190,18 +189,22 @@
                 :accept ".csv"
                 :style {:display "none"}
                 :on-change (fn [e]
-                             (let [selected-file (-> e .-target .-files (aget 0))]
-                               (reset! file selected-file)
-                               (reset! file-name (.-name selected-file))))}]
+                             (let [changed-file (-> e .-target .-files (aget 0))]
+                               (when changed-file
+                                 (reset! file changed-file)
+                                 (reset! file-name (.-name changed-file))
+                                 (println "Debug: File selected in directory-box:" @file)
+                                 (selected-file changed-file))))}]
        [:div.selected-csv-path-container
         (str "Selected File: " @file-name)]
        [:button {:on-click #(-> (js/document.getElementById "directory-path") .click)}
         "Select Directory"]])))
 
-(defn name-and-password-input [on-login]
+(defn name-and-password-input [selected-file]
   (let [profile-name (r/atom "")
         login-password (r/atom "")
-        error-message (r/atom "")]
+        error-message (r/atom "")
+        login (r/atom false)]
     (fn []
       [:form.input-field-container
        [:input {:type "text"
@@ -224,12 +227,16 @@
        [:input {:type "submit"
                 :value "Login"
                 :on-click (fn [e]
-                            (help/handle-login-submission e profile-name login-password on-login error-message))}]
+                            (.preventDefault e)
+                            (reset! login true)
+                            (println "Debug: File selected in nameinputcont callback:" @selected-file)
+                            (help/handle-login-submission e profile-name login-password login error-message))}]
        [:input {:type "button"
                 :id "caccount-button"
                 :value "New?"
                 :on-click (fn [e]
-                            (help/handle-login-submission e profile-name login-password nil error-message))}]])))
+                            (.preventDefault e)
+                            (help/handle-login-submission e profile-name login-password login error-message))}]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;           If logged-in              ;
@@ -270,23 +277,27 @@
   (let [selected-file (r/atom nil)
         error-message (r/atom "")]
     (fn []
-      (if  @help/logged-in
-       [logged-in-view  (:current-user @help/user-state)]
+      (if @help/logged-in
+        [logged-in-view (:current-user @help/user-state)]
         [:div.main-container
          [heading-box]
          [:h2 "Login"]
-         [directory-box (fn [file]
-                          (reset! selected-file file))]
-         [name-and-password-input
+         [directory-box
+          (fn [file]
+            (println "Debug: File selected in main-page-input-container callback:" file)
+            (reset! selected-file file))]
+         [name-and-password-input selected-file
           (fn [profile-name password]
             (if (or (empty? profile-name) (empty? password))
               (reset! error-message "Please fill in both fields.")
-              (if (and @selected-file (help/valid-login? profile-name password));authenticate user here
-                (do
-                  (swap! @help/user-state assoc :current-user profile-name)
-                  (reset! @help/logged-in {:loggedIn false})
-                  (help/read-file @selected-file)) ;Where reading a file will take place
-                (reset! error-message "Invalid profile-name or password"))))]
+              (do
+                (println "Debug: File selected in name-and-password-input callback:" @selected-file)
+                (if (and @selected-file (help/valid-login? profile-name password))
+                  (do
+                    (swap! @help/user-state assoc :current-user profile-name)
+                    (reset! @help/logged-in {:loggedIn false})
+                    (help/handle-file-selection @selected-file))
+                  (reset! error-message "Invalid profile-name or password")))))]
          (when (not @help/logged-in)
            [:div.error-message @error-message])]))))
 

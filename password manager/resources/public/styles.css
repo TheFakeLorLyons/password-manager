@@ -289,6 +289,7 @@ button {
   font-family: Cambria;
 }
 #generate-pw-button:hover,
+#copy-pw-button:hover,
 button:hover {
   background-color: #b5b8d39d;  
 }

@@ -1,6 +1,6 @@
 (ns LPM.clj.io
   (:require [clojure.data.csv :as csv]
-            [LMP.user :as usr]
+            [LPM.clj.user :as usr]
             [clojure.java.io :as io])
   (:import (java.time Instant)))
 
@@ -27,6 +27,18 @@
                         passwords)))
            (:users @usr/current-user))))
 
+(defn write-to-csv [current-user]
+  (with-open [writer (io/writer "resources/export.csv")]
+    (let [users (vals (:users @current-user))]
+      (doseq [user users]
+        (let [profile-row [[(:userProfileName user) (:userLoginPassword user)]]
+              password-rows (map (fn [{:keys [pName pContent pNotes]}]
+                                   [pName pContent pNotes])
+                                 (:passwords user))]
+          ;Write profile row
+          (csv/write-csv writer profile-row)
+          ;Write password rows
+          (csv/write-csv writer password-rows))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;          exporting to csv           ;

@@ -37,6 +37,23 @@
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "L-> Password removed successfully"})}))
 
+  (POST "/request-existing-csv" {:keys [body]}
+    (let [profile-name (:userProfileName body)
+          login-password (:userLoginPassword body)
+          csv-content (:csvContent body)]
+      (if (io/csv-to-current-user profile-name login-password csv-content)
+        (do
+          (println "Login successful")
+          {:status 200
+           :headers {"Content-Type" "application/json"}
+           :body (cjson/write-str {:message "Login success!"
+                                  :user (get-in @usr/current-user [:users profile-name])})})
+        (do
+          (println "Login failed")
+          {:status 401
+           :headers {"Content-Type" "application/json"}
+           :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})}))))
+
 (GET "/generate-a-password" request
   (let [size (try
                (Integer/parseInt (get-in request [:params "size"]))

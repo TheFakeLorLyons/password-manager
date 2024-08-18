@@ -6,11 +6,11 @@
 
 (def current-user (atom
             {:users
-             {"profile" {:userProfileName "Admin User"
-                         :userLoginPassword "password123"
-                         :passwords [{:pName "example"
-                                      :pContent "exampleContent"
-                                      :pNotes "Example note"}]}}}))
+             {"profile" {:userProfileName nil
+                         :userLoginPassword nil
+                         :passwords [{:pName nil
+                                      :pContent nil
+                                      :pNotes nil}]}}}))
 
 (defn on-create-account
   [profile-name login-password]
@@ -19,6 +19,14 @@
            {:userProfileName profile-name
             :userLoginPassword login-password
             :passwords []})))
+
+(defn remove-a-password
+  [profile-name pw-to-remove]
+  (swap! current-user update-in
+         [:users profile-name :passwords]
+         (fn [passwords]
+           (let [updated-passwords (remove #(= (:pName %) pw-to-remove) passwords)]
+             updated-passwords))))
 
 (defn add-new-password
   [profile-name login-password new-password]
@@ -30,11 +38,11 @@
               :userLoginPassword login-password
               :passwords [new-password]}))))
 
-(defn on-login
-  [profile-name login-password]
-  ;get logic for old csv
-  ;unencrypt logic 
-  (swap! current-user update-in [:users profile-name] (fn [_]
-                                                   {:userProfileName profile-name
-                                                    :userLoginPassword login-password
-                                                    :passwords []})))
+
+(defn get-profile-on-login
+  [profile-name login-password passwords]
+  (swap! current-user update-in [:users profile-name]
+         (fn [_]
+           {:userProfileName profile-name
+            :userLoginPassword login-password
+            :passwords passwords})))

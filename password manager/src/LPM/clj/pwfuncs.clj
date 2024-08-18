@@ -70,7 +70,7 @@
 (defn gen 
   [size]
   (generate-password size))
-;; Function to add a new password entry
+  
 (defn add-password [current-user profile-name]
   (println "Would you like to create your own password or generate one? (Enter 'create' or 'generate'):")
   (let [choice (str/lower-case (read-line))]
