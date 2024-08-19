@@ -10,24 +10,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn csv-to-current-user [csv-string]
-  (let [lines (str/split-lines csv-string)
-        _ (println "Split lines:" lines "\n")
-        [header & password-lines] lines
-        _ (println "Header:" header "Password lines:" password-lines "\n")
-        [profile-name login-password] (str/split header #",")
-        _ (println "Profile name:" profile-name "Login password:" login-password "\n")
-        parsed-passwords (mapv (fn [line]
-                                 (let [[pName pContent pNotes] (str/split line #",")] ; Split each line into fields
-                                   {:pName pName
-                                    :pContent pContent
-                                    :pNotes pNotes}))
-                               password-lines)]
-    (println "Parsed passwords:" parsed-passwords "\n")
-    {:users
-     {profile-name
+  (try
+    (let [lines (str/split-lines csv-string)
+          [header & password-lines] lines
+          [profile-name login-password] (str/split header #",")]
       {:userProfileName profile-name
        :userLoginPassword login-password
-       :passwords parsed-passwords}}}))
+       :passwords (mapv (fn [line]
+                          (let [[pName pContent pNotes] (str/split line #",")]
+                            {:pName pName
+                             :pContent pContent
+                             :pNotes pNotes}))
+                        password-lines)})
+    (catch Exception e
+      (println "Error processing CSV:" (.getMessage e))
+      nil)))
+
 
 (defn current-user-to-csv-data []
   (cons

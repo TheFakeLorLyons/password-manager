@@ -269,16 +269,18 @@
          "You have no passwords yet"])
       (when (not @help/show-add-form)
         [:ul
-         (for [{:keys [pName pContent pNotes]} passwords]
-           ^{:key pName}
-           [:li.password-list
-            (str "Name: " pName)
-            [:div.pw-list-options
-             (str "PW Content: " pContent)
-             [:div.pw-list-buttons
-              [delete-pw-component (:userProfileName @help/user-state) pName]
-              [copy-pw-components pContent]]]
-            (str "Notes: " pNotes)])])]]))
+         (map-indexed
+          (fn [index password]
+            ^{:key index}
+            [:li.password-list
+             "Name: " (:pName password)
+             [:div.pw-list-options
+              "PW Content: " (:pContent password)
+              [:div.pw-list-buttons
+               [delete-pw-component (:userProfileName @help/user-state) (:pName password)]
+               [copy-pw-components (:pContent password)]]]
+             "Notes: " (:pNotes password)])
+          (:passwords @help/user-state))])]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 Frame               ;

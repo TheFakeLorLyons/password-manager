@@ -120,14 +120,29 @@
      :format :json
      :response-format :json
      :handler (fn [response]
-                (let [profile-name (:userProfileName response)
-                      login-password (:userLoginPassword response)
-                      passwords (:passwords response)]
-                  (js/console.log "Logged in successfully:" response)
+                (js/console.log "Raw Response: " response)
+                (let [profile (js->clj response :keywordize-keys true)
+                      profile-name (get response "userProfileName")
+                      login-password (get response "userLoginPassword")
+                      processed-passwords
+                      (doall
+                       (map
+                        (fn [pw]
+                          (let [pName (-> pw (get "pName"))
+                                pContent (-> pw (get "pContent"))
+                                pNotes (-> pw (get "pNotes"))]
+                            {:pName pName
+                             :pContent pContent
+                             :pNotes pNotes}))
+                        (get response "passwords")))]
+                  (js/console.log "Logged in successfully:" profile)
                   (reset! user-state {:userProfileName profile-name
                                       :userLoginPassword login-password
-                                      :passwords passwords})
-                  (reset! logged-in true)))
+                                      :passwords processed-passwords}))
+                (js/console.log "userNames on obtaining profile:" (@user-state :userProfileName))
+                (js/console.log "loginPassword on obtaining profile:" (@user-state :userLoginPassword))
+                (js/console.log "passwords on obtaining profile:" (@user-state :passwords))
+                (reset! logged-in true))
      :error-handler (fn [error]
                       (js/console.error "Failed obtain user profile:" error))}))
 

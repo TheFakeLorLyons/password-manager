@@ -40,17 +40,18 @@
 
   (POST "/request-existing-csv" {:keys [body]} 
     (println "Back End attempt to read csv" body)
-    (if (io/csv-to-current-user body)
+    (let [user-data (io/csv-to-current-user body)]
+    (if user-data
       (do
-        (println "CSV credentials successfully processed")
-        {:status 200
-         :headers {"Content-Type" "application/json"}
-         :body (cjson/write-str {:message "CSV READ!"})})
+        (println "CSV credentials successfully processed" - user-data)
+          {:status 200
+           :headers {"Content-Type" "application/json"}
+           :body (cjson/write-str user-data)})
       (do
         (println "Login failed")
         {:status 401
          :headers {"Content-Type" "application/json"}
-         :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})})))
+         :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})}))))
 
   (POST "/save-current-session" {:keys [body]}
     (let [profile-name (:userProfileName body)
