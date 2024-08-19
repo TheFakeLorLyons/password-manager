@@ -1,21 +1,33 @@
 (ns LPM.clj.io
   (:require [clojure.data.csv :as csv]
             [LPM.clj.user :as usr]
-            [clojure.java.io :as io])
+            [clojure.java.io :as io]
+            [clojure.string :as str])
   (:import (java.time Instant)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;     converting csv data to atom     ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn csv-to-current-user [csv-data]
-  (reduce (fn [acc [profile-name login-password & password-data]]
-            (assoc-in acc [:users profile-name]
-                      {:userProfileName profile-name
-                       :userLoginPassword login-password
-                       :passwords (partition 3 password-data)}))
-          {}
-          (rest csv-data)))  ; Skip the header row
+(defn csv-to-current-user [csv-string]
+  (let [lines (str/split-lines csv-string)
+        _ (println "Split lines:" lines "\n")
+        [header & password-lines] lines
+        _ (println "Header:" header "Password lines:" password-lines "\n")
+        [profile-name login-password] (str/split header #",")
+        _ (println "Profile name:" profile-name "Login password:" login-password "\n")
+        parsed-passwords (mapv (fn [line]
+                                 (let [[pName pContent pNotes] (str/split line #",")] ; Split each line into fields
+                                   {:pName pName
+                                    :pContent pContent
+                                    :pNotes pNotes}))
+                               password-lines)]
+    (println "Parsed passwords:" parsed-passwords "\n")
+    {:users
+     {profile-name
+      {:userProfileName profile-name
+       :userLoginPassword login-password
+       :passwords parsed-passwords}}}))
 
 (defn current-user-to-csv-data []
   (cons

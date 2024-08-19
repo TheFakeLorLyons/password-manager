@@ -159,15 +159,23 @@
          :on-click #(help/copy-text-to-clipboard @text)}
         "[]"])))
 
+(defn save-session-component []
+  (when (not @help/show-add-form)
+    [:button {:id "logout-button"
+              :on-click (fn []
+                          (help/save-current-session))} "Save Session"]))
+
 (defn heading-box []
   (if @help/logged-in
-    [:div.logged-in-heading-container
-     #_{:style
-      {:opacity (if (:loggedIn @help/logged-in) 1 0)}};fades in login effect
-     [:h2 "Lor's Password Manager"]
-     [:button {:id "logout-button"
-               :on-click (fn []
-                           (help/logout))} "Logout"]]
+    [:div
+     [:div.logged-in-heading-container
+      #_{:style
+         {:opacity (if (:loggedIn @help/logged-in) 1 0)}};fades in login effect
+      [:h2 "Lor's Password Manager"]
+      [:button {:id "logout-button"
+                :on-click (fn []
+                            (help/logout))} "Logout"]]
+     [save-session-component]]
     [:div.heading-container
      [:h1 "Lor's Password Manager"]]))
 
@@ -230,6 +238,8 @@
                             (.preventDefault e)
                             (reset! login true)
                             (println "Debug: File selected in nameinputcont callback:" @selected-file)
+                            (when (some? @selected-file)
+                               (help/handle-file-selection @selected-file))
                             (help/handle-login-submission e profile-name login-password login error-message))}]
        [:input {:type "button"
                 :id "caccount-button"
@@ -242,8 +252,9 @@
                                         ;           If logged-in              ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn logged-in-view [profile-name]
-  (let [passwords (@help/user-state :passwords)]
+(defn logged-in-view []
+  (let [profile-name (@help/user-state :userProfileName)
+        passwords (@help/user-state :passwords)]
     [:div.main-container
      [heading-box]
      [:div
@@ -278,7 +289,7 @@
         error-message (r/atom "")]
     (fn []
       (if @help/logged-in
-        [logged-in-view (:current-user @help/user-state)]
+        [logged-in-view]
         [:div.main-container
          [heading-box]
          [:h2 "Login"]
@@ -295,8 +306,8 @@
                 (if (and @selected-file (help/valid-login? profile-name password))
                   (do
                     (swap! @help/user-state assoc :current-user profile-name)
-                    (reset! @help/logged-in {:loggedIn false})
-                    (help/handle-file-selection @selected-file))
+                    (println "csv is about to be read")
+                    (reset! @help/logged-in {:loggedIn false}))
                   (reset! error-message "Invalid profile-name or password")))))]
          (when (not @help/logged-in)
            [:div.error-message @error-message])]))))
@@ -326,4 +337,5 @@
   ;Group Passwords
   ;Password Hotkeys
   ;Add default values to the add pw page
+  ;prompt the user before deleting or closing without saving
   )

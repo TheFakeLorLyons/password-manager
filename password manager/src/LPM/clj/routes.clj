@@ -9,7 +9,8 @@
             [ring.middleware.cors :refer [wrap-cors]]
             [clojure.data.json :as cjson]
             [LPM.clj.user :as usr]
-            [LPM.clj.pwfuncs :as pwf]))
+            [LPM.clj.pwfuncs :as pwf]
+            [LPM.clj.io :as io]))
 
 (defroutes app-routes
   (POST "/create-account" {:keys [body]}
@@ -37,35 +38,54 @@
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "L-> Password removed successfully"})}))
 
-  (POST "/request-existing-csv" {:keys [body]}
+  (POST "/request-existing-csv" {:keys [body]} 
+    (println "Back End attempt to read csv" body)
+    (if (io/csv-to-current-user body)
+      (do
+        (println "CSV credentials successfully processed")
+        {:status 200
+         :headers {"Content-Type" "application/json"}
+         :body (cjson/write-str {:message "CSV READ!"})})
+      (do
+        (println "Login failed")
+        {:status 401
+         :headers {"Content-Type" "application/json"}
+         :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})})))
+
+  (POST "/save-current-session" {:keys [body]}
     (let [profile-name (:userProfileName body)
           login-password (:userLoginPassword body)
-          csv-content (:csvContent body)]
-      (if (io/csv-to-current-user profile-name login-password csv-content)
+          passwords (:passwords body)
+          user-profile {:userProfileName profile-name
+                        :userLoginPassword login-password
+                        :passwords passwords}]
+      (println "Back End attempt to save csv")
+      (if (io/write-to-csv user-profile)
         (do
           (println "Login successful")
           {:status 200
            :headers {"Content-Type" "application/json"}
            :body (cjson/write-str {:message "Login success!"
-                                  :user (get-in @usr/current-user [:users profile-name])})})
+                                   :user (get-in @usr/current-user [:users profile-name])})})
         (do
           (println "Login failed")
           {:status 401
            :headers {"Content-Type" "application/json"}
            :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})}))))
 
-(GET "/generate-a-password" request
-  (let [size (try
-               (Integer/parseInt (get-in request [:params "size"]))
-               (catch Exception e
-                 nil))]
-    (if (and size (pos? size))
-      (let [password (pwf/generate-password size)]
-        {:status 200
-         :body {:password password
-                :message "Password generated successfully"}})
-      {:status 400
-       :body {:error "Invalid size parameter. Must be a positive integer."}}))))
+
+  (GET "/generate-a-password" request
+    (let [size (try
+                 (Integer/parseInt (get-in request [:params "size"]))
+                 (catch Exception e
+                   nil))]
+      (if (and size (pos? size))
+        (let [password (pwf/generate-password size)]
+          {:status 200
+           :body {:password password
+                  :message "Password generated successfully"}})
+        {:status 400
+         :body {:error "Invalid size parameter. Must be a positive integer."}}))))
 
 (def handler
   (-> app-routes
