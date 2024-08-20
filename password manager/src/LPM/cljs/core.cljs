@@ -265,17 +265,18 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn logged-in-view []
-  (let [profile-name (@help/user-state :userProfileName)
-        passwords (get help/user-state :passwords)]
+  (let [user-state @help/user-state
+        profile-name (get user-state :userProfileName "Unknown")
+        passwords (get user-state :passwords [])]
     [:div.main-container
      [heading-box]
      [:div
       (when (not @help/show-add-form)
-        [:div 
+        [:div
          [:h2 {:style {:text-align "center"}}
-          (str "Hello " @profile-name ", you logged in at " (current-time))]
+          (str "Hello " profile-name ", you logged in at " (current-time))];@=newuser
          [:div {:style {:border-bottom "1pt solid #ede9f6"
-                        :width "max" 
+                        :width "max"
                         :align-self "center"}}]
          [plus-sign-component]])
       (when @help/show-add-form
@@ -291,13 +292,13 @@
              ^{:key index}
              [:li.password-list {:style {:list-style-type "numbered"
                                          :border-bottom ".5pt solid #b5b8d39d"}}
-              "|-----Name-----: " (.toString @(:pName password))
+              "|-----Name-----: " (.toString (:pName password));@=newuser
               [:div.pw-list-options
-               "|-PW Content-: " (.toString @(:pContent password))
+               "|-PW Content-: " (.toString (:pContent password));@=newuser
                [:div.pw-list-buttons
                 [delete-pw-component (:userProfileName @help/user-state) (:pName password)]
-                [copy-pw-components (:pContent password)]]]
-              "|-----Notes-----: " (.toString @(:pNotes password))])
+                [copy-pw-components (:pContent password)]]];@=newuser
+              "|-----Notes-----: " (.toString (:pNotes password))])
            (:passwords @help/user-state)))])]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

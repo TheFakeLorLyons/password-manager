@@ -140,11 +140,11 @@
                       login-password (get response "userLoginPassword")
                       processed-passwords
                       (doall
-                       (map
+                       (mapv
                         (fn [pw]
-                          (let [pName (-> pw (get "pName"))
-                                pContent (-> pw (get "pContent"))
-                                pNotes (-> pw (get "pNotes"))]
+                          (let [pName (get pw "pName")
+                                pContent (get pw "pContent")
+                                pNotes (get pw "pNotes")]
                             {:pName pName
                              :pContent pContent
                              :pNotes pNotes}))
@@ -167,9 +167,9 @@
      (clj->js password)))))
 
 (defn save-current-session [callback]
-    (let [user-profile-name @(get @user-state :userProfileName)
-          user-login-password @(get @user-state :userLoginPassword)
-          passwords  (mapv #(update-vals % deref) (get @user-state :passwords))]
+    (let [user-profile-name (get @user-state :userProfileName);@=newuser
+          user-login-password (get @user-state :userLoginPassword);@=newuser
+          passwords  (mapv #(update-vals % deref) (get @user-state :passwords))];(mapv #(update-vals % deref) (get @user-state :passwords))=newuser
       (js/console.log "Attempting to save csv!" callback)
       (js/console.log "FE userProfileName: " (get @user-state :userProfileName))
       (js/console.log "FE userLoginPassword: " (get @user-state :userLoginPassword))
@@ -218,9 +218,9 @@
           (reset! logged-in true))
         (do
 
-          (swap! user-state assoc :userProfileName profile-name
-                                   :userLoginPassword login-password
-                                   :passwords [])
+          (reset! user-state  {:userProfileName @profile-name
+                               :userLoginPassword @login-password
+                               :passwords []})
           (reset! logged-in true)
           (println "finl: profile-name =" (get @user-state :userProfileName))
           (println "finl: login-password =" (get @user-state :userLoginPassword))
