@@ -20,6 +20,14 @@ body {
   height: 75vh;
   margin-bottom: 25vh; /* Full viewport height */
 }
+.export-container{
+  display: flex;
+  align-items: center;
+  margin: -1vh;
+  margin-bottom: -.5vh;
+  font-size: 10pt;
+  transform: translate(1.5vh, 0vh);
+}
 .directory-container {
   display: flex;
   text-align: center;
@@ -120,13 +128,13 @@ body {
 }
 .password-list {
   font-size: 12pt;
-  margin-top: 10px;
+  margin-top: 15px;
   margin-bottom: 10px;
+  transform: translate(-1.75vh, 1vh);
 }
 .pw-list-options {
   display: flex;
   justify-content: space-between;
-  
 }
 .pw-list-buttons {
   display: flex;
@@ -239,8 +247,23 @@ form {
 #caccount-button:hover {
   background-color: #b5b8d39d;
 }
+#export-button {
+  background-color: #ede9f6;
+  color: #290c35;
+  border: none;
+  padding: 3px;
+  align-self: center;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: Cambria;
+  max-width: 30%;
+}
 #logout-button {
-  background-color: #ede9f6f3;
+  background-color: #ede9f6;
   color: #290c35;
   border: none;
   padding: 3px;
@@ -303,11 +326,12 @@ button:hover {
 }
 #copy-pw-button {
   padding: 5px;
+  font-weight: bold;
   align-self: center;
   padding-top: 0px;
   padding-right: 4px;
-  background: #ede9f6f3;
-  color: hsl(274, 48%, 34%);
+  background: #ede9f6;
+  color: rgb(137, 167, 189);
   cursor: pointer;
   transform: translate(1vw, -0.2vh)
 }

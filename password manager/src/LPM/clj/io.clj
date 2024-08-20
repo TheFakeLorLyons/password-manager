@@ -37,8 +37,8 @@
                         passwords)))
            (:users @usr/current-user))))
 
-(defn write-to-csv [current-user]
-  (with-open [writer (io/writer "resources/export.csv")]
+(defn write-to-csv [current-user path]
+  (with-open [writer (io/writer path)]
     (let [users (vals (:users @current-user))]
       (doseq [user users]
         (let [profile-row [[(:userProfileName user) (:userLoginPassword user)]]
@@ -50,6 +50,30 @@
           ;Write password rows
           (csv/write-csv writer password-rows))))))
 
+(defn generate-csv [current-user]
+  (let [profile (get-in current-user [:users "profile"])
+        user-info [(get profile :userProfileName) (get profile :userLoginPassword)]
+        passwords (get profile :passwords)
+        data (for [password passwords]
+               [(get password "pName")
+                (get password "pContent")
+                (get password "pNotes")])
+        csv-data (cons user-info data)]
+    (with-out-str
+      (csv/write-csv *out* csv-data))))
+
+(defn generate-csv2 [current-user]
+  (let [output (java.io.StringWriter.)]
+    (with-open [writer (io/writer output)]
+      (let [users (vals (:users @current-user))]
+        (doseq [user users]
+          (let [profile-row [[(:userProfileName user) (:userLoginPassword user)]]
+                password-rows (map (fn [{:keys [pName pContent pNotes]}]
+                                     [pName pContent pNotes])
+                                   (:passwords user))]
+            (csv/write-csv writer profile-row)
+            (csv/write-csv writer password-rows)))))
+    (.toString output)))
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;          exporting to csv           ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

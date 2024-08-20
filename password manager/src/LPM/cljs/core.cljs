@@ -95,7 +95,7 @@
        [:input {:type "submit"
                 :value "Submit New Password"
                 :on-click (fn [e]
-                            (help/handle-add-new-password-submission e password-name password-content password-notes error-message))}]])))
+                            (help/new-password-func e password-name password-content password-notes error-message))}]])))
 
 (defn center-generation-box [form-numChar form-numUpper form-perSpaces form-perSym password-content]
   [:div.center-generation-table
@@ -159,11 +159,21 @@
          :on-click #(help/copy-text-to-clipboard @text)}
         "[]"])))
 
-(defn save-session-component []
-  (when (not @help/show-add-form)
-    [:button {:id "logout-button"
-              :on-click (fn []
-                          (help/save-current-session))} "Save Session"]))
+(defn save-session-component [selected-export]
+  (let [export-success (r/atom false)]
+      (fn []
+        [:div.export-container
+         [:button {:on-click (fn []
+                               (help/save-current-session
+                               (fn [csv-content]
+                                 (help/download-csv csv-content "passwords.csv")
+                                 (reset! export-success true)
+                                 (js/setTimeout #(reset! export-success false) 5000))))}
+          "Export CSV"]
+         (when @export-success
+           [:div {:style {:color "green"}} "Export Successful"])
+         #_[:div.selected-csv-path-container
+            (str "Selected File: " @file-name)]])))
 
 (defn heading-box []
   (if @help/logged-in
@@ -175,7 +185,9 @@
       [:button {:id "logout-button"
                 :on-click (fn []
                             (help/logout))} "Logout"]]
-     [save-session-component]]
+     (when (not @help/show-add-form)
+       [:div.logged-in-io-buttons
+        [save-session-component]])]
     [:div.heading-container
      [:h1 "Lor's Password Manager"]]))
 
@@ -254,13 +266,17 @@
 
 (defn logged-in-view []
   (let [profile-name (@help/user-state :userProfileName)
-        passwords (@help/user-state :passwords)]
+        passwords (get help/user-state :passwords)]
     [:div.main-container
      [heading-box]
      [:div
       (when (not @help/show-add-form)
-        [:div
-         [:h2 (str "Hello " profile-name ", you logged in at " (current-time))]
+        [:div 
+         [:h2 {:style {:text-align "center"}}
+          (str "Hello " @profile-name ", you logged in at " (current-time))]
+         [:div {:style {:border-bottom "1pt solid #ede9f6"
+                        :width "max" 
+                        :align-self "center"}}]
          [plus-sign-component]])
       (when @help/show-add-form
         [generation-form-box])
@@ -269,18 +285,20 @@
          "You have no passwords yet"])
       (when (not @help/show-add-form)
         [:ul
-         (map-indexed
-          (fn [index password]
-            ^{:key index}
-            [:li.password-list
-             "Name: " (:pName password)
-             [:div.pw-list-options
-              "PW Content: " (:pContent password)
-              [:div.pw-list-buttons
-               [delete-pw-component (:userProfileName @help/user-state) (:pName password)]
-               [copy-pw-components (:pContent password)]]]
-             "Notes: " (:pNotes password)])
-          (:passwords @help/user-state))])]]))
+         (doall
+          (map-indexed
+           (fn [index password]
+             ^{:key index}
+             [:li.password-list {:style {:list-style-type "numbered"
+                                         :border-bottom ".5pt solid #b5b8d39d"}}
+              "|-----Name-----: " (.toString @(:pName password))
+              [:div.pw-list-options
+               "|-PW Content-: " (.toString @(:pContent password))
+               [:div.pw-list-buttons
+                [delete-pw-component (:userProfileName @help/user-state) (:pName password)]
+                [copy-pw-components (:pContent password)]]]
+              "|-----Notes-----: " (.toString @(:pNotes password))])
+           (:passwords @help/user-state)))])]]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 Frame               ;
@@ -340,4 +358,5 @@
   ;Password Hotkeys
   ;Add default values to the add pw page
   ;prompt the user before deleting or closing without saving
+  ;submitting fast can submit multiple of the same password and cause issue
   )

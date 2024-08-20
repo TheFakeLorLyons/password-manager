@@ -17,6 +17,10 @@
     (let [profile-name (:userProfileName body)
           login-password (:userLoginPassword body)]
       (usr/on-create-account profile-name login-password)
+      (println "Received request body:" body)
+      (println "Generated user-profile:" login-password)
+      (println "Generated CSV content:")
+      (println "Back End attempt to save csv")
       {:status 200
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "User created successfully"})}))
@@ -54,26 +58,32 @@
          :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})}))))
 
   (POST "/save-current-session" {:keys [body]}
-    (let [profile-name (:userProfileName body)
-          login-password (:userLoginPassword body)
-          passwords (:passwords body)
-          user-profile {:userProfileName profile-name
-                        :userLoginPassword login-password
-                        :passwords passwords}]
+    (let [profile-name (get body "userProfileName")
+          login-password (get body "userLoginPassword")
+          passwords (get body "passwords")
+          user-profile {:users {"profile" {:userProfileName profile-name
+                                              :userLoginPassword login-password
+                                              :passwords passwords}}}
+          csv-content (io/generate-csv user-profile)]
+            (println "Received request body:" body)
+      (println "Generated namw:" profile-name)
+      (println "Generated pw:" login-password)
+      (println "Received pws:" passwords)
+      (println "Generated user-profile:" user-profile)
+      (println "Generated CSV content:" csv-content)
       (println "Back End attempt to save csv")
-      (if (io/write-to-csv user-profile)
+      (if csv-content
         (do
           (println "Login successful")
           {:status 200
-           :headers {"Content-Type" "application/json"}
-           :body (cjson/write-str {:message "Login success!"
-                                   :user (get-in @usr/current-user [:users profile-name])})})
+           :headers {"Content-Type" "text/csv"
+                     "Content-Disposition" "attachment; filename=\"passwords.csv\""}
+           :body csv-content})
         (do
           (println "Login failed")
           {:status 401
            :headers {"Content-Type" "application/json"}
            :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})}))))
-
 
   (GET "/generate-a-password" request
     (let [size (try

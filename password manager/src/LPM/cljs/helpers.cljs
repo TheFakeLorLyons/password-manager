@@ -1,6 +1,7 @@
 (ns LPM.cljs.helpers
   (:require [ajax.core :as ajax]
-            [reagent.core :as r]))
+            [reagent.core :as r]
+            [clojure.string :as str]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;              cljs-io                ;
@@ -50,19 +51,31 @@
 (defn valid-login? [profile-name login-password]
   false) ;L->Placeholder for actual implementation
 
+(defn concatenate-passwords [passwords]
+  (->> passwords
+       (map (fn [password]
+              (str "Name: " (:pName password)
+                   ", Content: " (:pContent password)
+                   ", Notes: " (:pNotes password))))
+       (str/join "\n")))
+
+
 (defn create-account [profile-name login-password]
   (js/console.log "Attempting to create account for:" profile-name)
   (ajax/POST "http://localhost:3000/create-account"
-    {:params {:userProfileName profile-name
-              :userLoginPassword login-password}
+    {:params {:userProfileName @profile-name
+              :userLoginPassword @login-password}
      :headers {"Content-Type" "application/json"}
      :format :json
      :response-format :json
      :handler (fn [response]
                 (js/console.log "Account created:" response)
-                (swap! user-state assoc :userProfileName profile-name)
-                (swap! user-state assoc :userLoginPassword login-password)
+                (swap! user-state assoc :userProfileName @profile-name)
+                (swap! user-state assoc :userLoginPassword @login-password)
                 (swap! user-state assoc :passwords [])
+                (js/console.log "FE userProfileName: " (get @user-state [:userProfileName]))
+                (js/console.log "FE userLoginPassword: " (get @user-state [:userLoginPassword]))
+                (js/console.log "FE passwords: " (get @user-state [:passwords]))
                 (reset! logged-in true))
      :error-handler (fn [error]
                       (js/console.error "Failed to create account:" error))}))
@@ -81,8 +94,9 @@
        :format :json
        :response-format :json
        :handler (fn [response]
-                  (js/console.log "Added a new password:" response)
+                  (js/console.log "Added a new password:" response) 
                   (swap! user-state update :passwords conj new-password)
+                  (js/console.log "add PW CHECK: " (get @user-state :passwords))
                   (reset! show-add-form false))
        :error-handler (fn [error]
                         (js/console.error "Failed to add password:" error))})))
@@ -146,19 +160,34 @@
      :error-handler (fn [error]
                       (js/console.error "Failed obtain user profile:" error))}))
 
-(defn save-current-session []
-  (js/console.log "Attempting to save csv!")
-  (ajax/POST "http://localhost:3000/save-current-session")
-  {:params {:userProfileName (get @user-state [:userProfileName])
-            :userLoginPassword (get @user-state [:userLoginPassword])
-            :passwords (get @user-state [:passwords])}
-   :headers {"Content-Type" "application/json"}
-   :format :json
-   :response-format :json
-   :handler (fn [response]
-              (js/console.log "Saved the session to csv!" response))
-   :error-handler (fn [error]
-                    (js/console.error "Failed to add password:" error))})
+(defn password-to-plain-object [password]
+  (js->clj
+   (js/JSON.parse
+    (js/JSON.stringify
+     (clj->js password)))))
+
+(defn save-current-session [callback]
+    (let [user-profile-name @(get @user-state :userProfileName)
+          user-login-password @(get @user-state :userLoginPassword)
+          passwords  (mapv #(update-vals % deref) (get @user-state :passwords))]
+      (js/console.log "Attempting to save csv!" callback)
+      (js/console.log "FE userProfileName: " (get @user-state :userProfileName))
+      (js/console.log "FE userLoginPassword: " (get @user-state :userLoginPassword))
+      (js/console.log "FE passwords: " (get @user-state :passwords))
+      (js/console.log "newvalname: " user-profile-name)
+      (js/console.log "newvalpw: " user-login-password)
+      (js/console.log "newvalnotes: " passwords)
+      (ajax/POST "http://localhost:3000/save-current-session"
+        {:params {:userProfileName user-profile-name
+                  :userLoginPassword user-login-password
+                  :passwords  passwords};just added concatonate passwords now it is a string 
+         :headers {"Content-Type" "text/csv"};but it is not true it is not reading right
+         :format :json
+         :handler (fn [response]
+                    (js/console.log "Saved the session to csv!" response)
+                    (callback response))
+         :error-handler (fn [error]
+                          (js/console.error "Failed to export csv:" error))})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             HTML Helpers            ;
@@ -188,8 +217,14 @@
           100)
           (reset! logged-in true))
         (do
-          (create-account @profile-name @login-password)
+
+          (swap! user-state assoc :userProfileName profile-name
+                                   :userLoginPassword login-password
+                                   :passwords [])
           (reset! logged-in true)
+          (println "finl: profile-name =" (get @user-state :userProfileName))
+          (println "finl: login-password =" (get @user-state :userLoginPassword))
+          (println "finl: login =" (get @user-state :passwords))
           #_(reset! error-message "Account created successfully"))))
     (reset! error-message "All fields must be filled in")))
 
@@ -197,7 +232,7 @@
   (ajax/GET "/api/data"
     {:handler (fn [response]
                 (println "Data received" response))}))
-
+;deprecated and likely superfluous without multiple profiles
 (defn handle-add-new-password-submission [e form-pName form-pContent form-pNotes error-message]
   (.preventDefault e)
   (let [profile-name (get-in @user-state [:userProfileName])
@@ -209,7 +244,20 @@
         #_(reset! error-message "New password entered!"))
       (reset! error-message "All fields must be filled in"))))
 
-
+(defn new-password-func [e form-pName form-pContent form-pNotes error-message]
+  (.preventDefault e)
+    (let [new-password
+          {:pName form-pName
+           :pContent form-pContent
+           :pNotes form-pNotes}]
+        (if (and (seq @form-pName) (seq @form-pContent))
+          (do
+            (reset! error-message "")
+            (swap! user-state update :passwords conj new-password);swap in the new password
+            (js/console.log "add PW CHECK: " (get @user-state :passwords))
+            (reset! show-add-form false)
+            #_(reset! error-message "New password entered!"))
+          (reset! error-message "All fields must be filled in"))))
 
 (defn copy-text-to-clipboard [pContent]
   (let [textarea (js/document.createElement "textarea")]
@@ -220,3 +268,12 @@
     (js/document.execCommand "copy")
     (js/document.body.removeChild textarea)
     (js/console.log "Text copied to clipboard!")))
+
+(defn download-csv [csv-content filename]
+  (let [blob (js/Blob. #js [csv-content] #js {:type "text/csv;charset=utf-8;"})
+        link (js/document.createElement "a")]
+    (set! (.-href link) (js/URL.createObjectURL blob))
+    (set! (.-download link) filename)
+    (.appendChild js/document.body link)
+    (.click link)
+    (.removeChild js/document.body link)))
