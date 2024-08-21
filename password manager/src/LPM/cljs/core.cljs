@@ -17,57 +17,56 @@
               :on-click click-handler}]]))
 
 (defn right-generation-column [form-numChar form-numUpper form-perSpaces form-perSym]
-  (fn []
-    [:form.generation-input-field-container
-     {:style {:align-items "center"
-              :transform "translate(-11vw, 0vh)"}}
-     [:h3 "Complexity Modifiers"]
-     [:input {:style {:width "30%"}
-              :type "text"
-              :id "numCharField"
-              :name "number-of-characters"
-              :placeholder "Total num chars"
-              :required false
-              :value @form-numChar
-              :on-change #(let [new-value (-> % .-target .-value)]
-                            (when (re-matches #"\d*" new-value)
-                              (reset! form-numChar new-value)))}]
-     [:input {:style {:width "30%"}
-              :type "text"
-              :id "numUpperField"
-              :name "number-of-upper-case"
-              :placeholder "% uppercase"
-              :required false
-              :value @form-numUpper
-              :on-change #(let [new-value (-> % .-target .-value)]
-                            (when (re-matches #"\d*" new-value)
-                              (reset! form-numUpper new-value)))}]
-     [:input {:style {:width "30%"}
-              :type "text"
-              :id "numSpaceField"
-              :name "number-of-spaces"
-              :placeholder "% spaces"
-              :required false
-              :value @form-perSpaces
-              :on-change #(let [new-value (-> % .-target .-value)]
-                            (when (re-matches #"\d*" new-value)
-                              (reset! form-perSpaces new-value)))}]
-     [:input {:style {:width "30%"}
-              :type "text"
-              :id "perSymField"
-              :name "number-of-symbols"
-              :placeholder "% symbols"
-              :required false
-              :value @form-perSym
-              :on-change #(let [new-value (-> % .-target .-value)]
-                            (when (re-matches #"\d*" new-value)
-                              (reset! form-perSym new-value)))}]]))
+    (fn []
+      (js/console.log "rightform1-numChar value:", @form-numChar)
+      [:form.generation-input-field-container
+       {:style {:align-items "center"
+                :transform "translate(-11vw, 0vh)"}}
+       [:h3 "Complexity Modifiers"]
+       [:input {:style {:width "30%"}
+                :type "text"
+                :id "numCharField"
+                :name "number-of-characters"
+                :placeholder "Total num chars"
+                :required false
+                :value @form-numChar
+                :on-change #(let [new-value (-> % .-target .-value)]
+                              (when (re-matches #"\d*" new-value)
+                                (reset! form-numChar new-value))
+                              (js/console.log "rightform2-numChar value:", @form-numChar))}]
+       [:input {:style {:width "30%"}
+                :type "text"
+                :id "numUpperField"
+                :name "number-of-upper-case"
+                :placeholder "% uppercase"
+                :required false
+                :value @form-numUpper
+                :on-change #(let [new-value (-> % .-target .-value)]
+                                 (when (re-matches #"\d*" new-value)
+                                   (reset! form-numUpper new-value)))}]
+       [:input {:style {:width "30%"}
+                :type "text"
+                :id "numSpaceField"
+                :name "number-of-spaces"
+                :placeholder "% spaces"
+                :required false
+                :value @form-perSpaces
+                :on-change #(let [new-value (-> % .-target .-value)]
+                                 (when (re-matches #"\d*" new-value)
+                                   (reset! form-perSpaces new-value)))}]
+       [:input {:style {:width "30%"}
+                :type "text"
+                :id "perSymField"
+                :name "number-of-symbols"
+                :placeholder "% symbols"
+                :required false
+                :value @form-perSym
+                :on-change #(let [new-value (-> % .-target .-value)]
+                                 (when (re-matches #"\d*" new-value)
+                                   (reset! form-perSym new-value)))}]]))
 
 (defn add-a-new-password-form [password-name password-content password-notes]
-  (let [password-name (r/atom "")
-        password-content (r/atom "")
-        password-notes (r/atom "")
-        error-message (r/atom "")]
+  (let [error-message (r/atom "")]
     (fn []
       [:form.generation-input-field-container ;change this from login container?
        [:h3 "Details"]
@@ -113,23 +112,25 @@
                                       (js/console.error "Failed to generate password:" error)))))}]])
 
 (defn generation-form []
-  (let [password-name (r/atom "")
-        password-content (r/atom "")
-        password-notes (r/atom "")
-        form-numChar (r/atom "")
-        form-numUpper (r/atom "")
-        form-perSpaces (r/atom "")
-        form-perSym (r/atom "")]
-    [:div.back-button-container
-     [back-button]
-     [:div.pw-generation-header
-      [:h2 "Add a new password"]
-      [:h3 "Manually enter your own password, or generate one based on the
+     (let [password-name (r/atom "")
+           password-content (r/atom "")
+           password-notes (r/atom "")
+           form-numChar (r/atom "")
+           form-numUpper (r/atom "")
+           form-perSpaces (r/atom "")
+           form-perSym (r/atom "")]
+       (fn []
+         (js/console.log "genformform-numChar value:", @form-numChar)
+         [:div.back-button-container
+          [back-button]
+          [:div.pw-generation-header
+           [:h2 "Add a new password"]
+           [:h3 "Manually enter your own password, or generate one based on the
            right side properties."]
-      [:div.generation-container
-       [add-a-new-password-form password-name password-content password-notes]
-       [center-generation-box form-numChar form-numUpper form-perSpaces form-perSym password-content]
-       [right-generation-column form-numChar form-numUpper form-perSpaces form-perSym]]]]))
+           [:div.generation-container
+            [add-a-new-password-form password-name password-content password-notes]
+            [center-generation-box form-numChar form-numUpper form-perSpaces form-perSym password-content]
+            [right-generation-column form-numChar form-numUpper form-perSpaces form-perSym]]]])))
 
 (defn generation-form-box []
   (let [hidden-container false]
@@ -157,26 +158,28 @@
 (defn copy-pw-components [pContent]
   (let [text (r/atom pContent)]
     (fn []
-      [:button
-       {:id "copy-pw-button"
-        :on-click #(help/copy-text-to-clipboard @text)}
-       "[]"])))
+       [:button
+        {:id "copy-pw-button"
+         :on-click #(help/copy-text-to-clipboard @text)}
+        "[]"])))
 
 (defn save-session-component [selected-export]
-  (let [export-success (r/atom false)]
-    (fn []
-      [:div.export-container
-       [:button {:on-click (fn []
-                             (help/save-current-session
-                              (fn [csv-content]
-                                (help/download-csv csv-content "passwords.csv")
-                                (reset! export-success true)
-                                (js/setTimeout #(reset! export-success false) 5000))))}
-        "Export CSV"]
-       (when @export-success
-         [:div {:style {:color "green"}} "Export Successful"])
-       #_[:div.selected-csv-path-container
-          (str "Selected File: " @file-name)]])))
+  (let [export-success (r/atom true)]
+      (fn []
+        [:div.export-container
+         [:button {:on-click (fn []
+                               (help/save-current-session
+                               (fn [csv-content]
+                                 (help/download-csv csv-content "passwords.csv")
+                                 (reset! export-success true)
+                                 (js/setTimeout #(reset! export-success false) 5000))))}
+          "Export CSV"]
+         (when @export-success
+           [:div {:style {:color "#66ff00" 
+                          :transform "translate(5vh, 0vh)"
+                          :text-weight "bold"}} "Export Successful"])
+         #_[:div.selected-csv-path-container
+            (str "Selected File: " @file-name)]])))
 
 (defn heading-box []
   (if @help/logged-in
@@ -254,7 +257,7 @@
                             (reset! login true)
                             (println "Debug: File selected in nameinputcont callback:" @selected-file)
                             (when (some? @selected-file)
-                              (help/handle-file-selection @selected-file))
+                               (help/handle-file-selection @selected-file))
                             (help/handle-login-submission e profile-name login-password login error-message))}]
        [:input {:type "button"
                 :id "caccount-button"

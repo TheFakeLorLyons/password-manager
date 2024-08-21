@@ -38,9 +38,9 @@
                          :userLoginPassword nil
                          :passwords []}))
 
-(def logged-in (r/atom false));turn back to false to get normal operation
+(def logged-in (r/atom true));turn back to false to get normal operation
 
-(def show-add-form (r/atom false)); true to speed up to generation
+(def show-add-form (r/atom true)); true to speed up to generation
 
 (defn logout []
   (reset! user-state {:userProfileName nil
@@ -117,12 +117,14 @@
                       (js/console.error "Failed to remove password:" error))}))
 
 (defn generate-password-request [size]
+  (js/console.log "api call to generate password:" size)
   (let [url (str "http://localhost:3000/generate-a-password?size=" size)]
     (js/Promise. (fn [resolve reject]
                    (ajax/GET url
                      {:response-format (ajax/json-response-format {:keywords? true})
                       :handler (fn [response]
-                                 (resolve (:password response)))
+                                 (resolve (get response :password))
+                                  (js/console.log "api call to generate password:" (get response :password)))
                       :error-handler (fn [error]
                                        (reject error))})))))
 
@@ -160,12 +162,6 @@
                 (reset! logged-in true))
      :error-handler (fn [error]
                       (js/console.error "Failed obtain user profile:" error))}))
-
-(defn password-to-plain-object [password]
-  (js->clj
-   (js/JSON.parse
-    (js/JSON.stringify
-     (clj->js password)))))
 
 (defn save-current-session [callback]
   (let [user-profile-name (get @user-state :userProfileName);@=newuser
