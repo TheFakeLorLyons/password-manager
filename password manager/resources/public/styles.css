@@ -1,5 +1,4 @@
 /*containers*/
-
 body {
   display: flex;
   justify-content: center;
@@ -12,6 +11,7 @@ body {
   font-size: var(--font-size-base);
   color: #d5def5d4;
 }
+
 .main-container {
   display: flex;
   flex-direction: column;
@@ -33,27 +33,25 @@ body {
   text-align: center;
   align-items: center;
   justify-content: center;
-  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 70%);
+  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(19, 5, 26, 0.001) 60%);
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 30%;
   width: 100%;
   max-width: fit-content;
 }
-.input-field-container {
+.login-field-container {
   text-align: center;
-  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 78%);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  width: 100%;
+  border-radius: 50%;
+  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(19, 5, 26, 0.001) 50%);
+  padding: 100px;
+  transform: translate(0vw, -4.5vh);
   max-width: 30%;
 }
 .generation-input-field-container {
   text-align: center;
-  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 78%);
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background:  radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.01) 50%);
+  border-radius: 50%;
+  height: 27vh;
   width: 30%;
   max-width: 25%;
 }
@@ -70,11 +68,11 @@ body {
   display: flex;
   gap: 18vw;
   text-align: center;
-  border-radius: 8px;
+  border-radius: 50%;
   padding-right: 30px;
   padding-left: 30px;
   max-width: 100%;
-  background: radial-gradient(rgba(101, 67, 181, 0.472),rgba(41, 12, 53, 0.156) 70%);
+  background: radial-gradient(rgba(101, 67, 181, 0.472),rgba(19, 5, 26, 0.001) 60%);
   box-sizing: border-box;
   margin-bottom: 3vh;
 }
@@ -289,6 +287,7 @@ form {
   color: hsl(274, 48%, 34%);
   margin-bottom: 30px;
   margin-right: 35vh;
+  cursor: pointer;
 }
 #plus-button {
   font-size: 20px;
@@ -338,6 +337,8 @@ button:hover {
 
 
 
+
+/*Not implemented*/
  .cursor-effect {
    position: absolute;
    border-radius: 50%;

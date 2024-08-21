@@ -164,7 +164,7 @@
         "[]"])))
 
 (defn save-session-component [selected-export]
-  (let [export-success (r/atom true)]
+  (let [export-success (r/atom false)]
       (fn []
         [:div.export-container
          [:button {:on-click (fn []
@@ -177,9 +177,7 @@
          (when @export-success
            [:div {:style {:color "#66ff00" 
                           :transform "translate(5vh, 0vh)"
-                          :text-weight "bold"}} "Export Successful"])
-         #_[:div.selected-csv-path-container
-            (str "Selected File: " @file-name)]])))
+                          :text-weight "bold"}} "Export Successful"])])))
 
 (defn heading-box []
   (if @help/logged-in
@@ -213,7 +211,7 @@
                 :name "directory-path"
                 :placeholder "Directory Path"
                 :accept ".csv"
-                :style {:display "none"}
+                :style { :display "none"}
                 :on-change (fn [e]
                              (let [changed-file (-> e .-target .-files (aget 0))]
                                (when changed-file
@@ -232,7 +230,7 @@
         error-message (r/atom "")
         login (r/atom false)]
     (fn []
-      [:form.input-field-container
+      [:form.login-field-container
        [:input {:type "text"
                 :id "profileName"
                 :name "profile-name"
@@ -318,9 +316,9 @@
     (fn []
       (if @help/logged-in
         [logged-in-view]
-        [:div.main-container
+        [:div.main-container {:style {:margin-bottom (if @help/logged-in "5vh" "10vh")}}
          [heading-box]
-         [:h2 "Login"]
+         [:h2 {:style {:margin-bottom "2vh" :margin-top "3vh"}} "Login"]
          [directory-box
           (fn [file]
             (println "Debug: File selected in main-page-input-container callback:" file)
@@ -353,18 +351,28 @@
 (comment
   ;TODOS
   ;On-Login needs to require a path
+  
   ;Handle Validation/Authentification
-  ;Addpassword needs some methods
+
   ;Encryption/Decrpytion
+  
   ;Update Passwords
+  
   ;There should be a check to prevent multiple of the same password
+  
   ;improve the layout of the passwords on the login page
      ;ie move the bullet point to the center item
      ;make the copy edit buttons appear more nicely
+  
   ;Sort Passwords
+  
   ;Group Passwords
+  
   ;Password Hotkeys
-  ;Add default values to the add pw page
+  
+  ;Add default values to the add pw page (for default pw generation)
+  
   ;prompt the user before deleting or closing without saving
+  
   ;submitting fast can submit multiple of the same password and cause issue
   )

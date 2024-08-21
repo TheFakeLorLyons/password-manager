@@ -21,16 +21,6 @@
              (fn [content]
                (reset! csv-content content))))
 
-(defn alternative-read-file
-  "Process the csv data"
-  [file]
-  (let [reader (js/FileReader.)]
-    (set! (.-onload reader)
-          (fn [event]
-            (let [csv-data (-> (.-target event) .-result)]
-              (js/console.log csv-data))))
-    (.readAsText reader file)))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             HTTP Helpers            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -38,9 +28,9 @@
                          :userLoginPassword nil
                          :passwords []}))
 
-(def logged-in (r/atom true));turn back to false to get normal operation
+(def logged-in (r/atom false));turn back to false to get normal operation
 
-(def show-add-form (r/atom true)); true to speed up to generation
+(def show-add-form (r/atom false)); true to speed up to generation
 
 (defn logout []
   (reset! user-state {:userProfileName nil
@@ -50,15 +40,6 @@
 
 (defn valid-login? [profile-name login-password]
   false) ;L->Placeholder for actual implementation
-
-(defn concatenate-passwords [passwords]
-  (->> passwords
-       (map (fn [password]
-              (str "Name: " (:pName password)
-                   ", Content: " (:pContent password)
-                   ", Notes: " (:pNotes password))))
-       (str/join "\n")))
-
 
 (defn create-account [profile-name login-password]
   (js/console.log "Attempting to create account for:" profile-name)
@@ -117,8 +98,9 @@
                       (js/console.error "Failed to remove password:" error))}))
 
 (defn generate-password-request [size]
-  (js/console.log "api call to generate password:" size)
-  (let [url (str "http://localhost:3000/generate-a-password?size=" size)]
+  (let [entered-size (if (seq size) size "12")]
+  (js/console.log "api call to generate password:" entered-size)
+  (let [url (str "http://localhost:3000/generate-a-password?size=" entered-size)]
     (js/Promise. (fn [resolve reject]
                    (ajax/GET url
                      {:response-format (ajax/json-response-format {:keywords? true})
@@ -126,7 +108,7 @@
                                  (resolve (get response :password))
                                   (js/console.log "api call to generate password:" (get response :password)))
                       :error-handler (fn [error]
-                                       (reject error))})))))
+                                       (reject error))}))))))
 
 (defn request-existing-csv []
   (js/console.log "attempting to read csv:" @csv-content)
@@ -225,10 +207,7 @@
           #_(reset! error-message "Account created successfully"))))
     (reset! error-message "All fields must be filled in")))
 
-(defn fetch-data []
-  (ajax/GET "/api/data"
-    {:handler (fn [response]
-                (println "Data received" response))}))
+
 ;deprecated and likely superfluous without multiple profiles
 (defn handle-add-new-password-submission [e form-pName form-pContent form-pNotes error-message]
   (.preventDefault e)

@@ -39,7 +39,7 @@
               :passwords [new-password]}))))
 
 
-(defn get-profile-on-login;currently not being used
+(defn get-profile;currently not being used
   [profile-name login-password passwords]
   (swap! current-user update-in [:users profile-name]
          (fn [_]

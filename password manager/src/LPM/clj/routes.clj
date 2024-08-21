@@ -86,6 +86,7 @@
            :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})}))))
 
   (GET "/generate-a-password" request
+    (println "Received pws:" request)
     (let [size (try
                  (Integer/parseInt (get-in request [:params "size"]))
                  (catch Exception e
@@ -94,7 +95,7 @@
         (let [password (pwf/generate-password size)]
           {:status 200
            :body {:password password
-                  :message "Password generated successfully"}})
+                  :message "Password generated successfully password"}})
         {:status 400
          :body {:error "Invalid size parameter. Must be a positive integer."}}))))
 
