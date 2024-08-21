@@ -94,7 +94,7 @@
        :format :json
        :response-format :json
        :handler (fn [response]
-                  (js/console.log "Added a new password:" response) 
+                  (js/console.log "Added a new password:" response)
                   (swap! user-state update :passwords conj new-password)
                   (js/console.log "add PW CHECK: " (get @user-state :passwords))
                   (reset! show-add-form false))
@@ -148,7 +148,8 @@
                             {:pName pName
                              :pContent pContent
                              :pNotes pNotes}))
-                        (get response "passwords")))]
+                        (get response "passwords")))
+                      pwMap (get response "passwords")]
                   (js/console.log "Logged in successfully:" profile)
                   (reset! user-state {:userProfileName profile-name
                                       :userLoginPassword login-password
@@ -167,27 +168,27 @@
      (clj->js password)))))
 
 (defn save-current-session [callback]
-    (let [user-profile-name (get @user-state :userProfileName);@=newuser
-          user-login-password (get @user-state :userLoginPassword);@=newuser
-          passwords  (mapv #(update-vals % deref) (get @user-state :passwords))];(mapv #(update-vals % deref) (get @user-state :passwords))=newuser
-      (js/console.log "Attempting to save csv!" callback)
-      (js/console.log "FE userProfileName: " (get @user-state :userProfileName))
-      (js/console.log "FE userLoginPassword: " (get @user-state :userLoginPassword))
-      (js/console.log "FE passwords: " (get @user-state :passwords))
-      (js/console.log "newvalname: " user-profile-name)
-      (js/console.log "newvalpw: " user-login-password)
-      (js/console.log "newvalnotes: " passwords)
-      (ajax/POST "http://localhost:3000/save-current-session"
-        {:params {:userProfileName user-profile-name
-                  :userLoginPassword user-login-password
-                  :passwords  passwords};just added concatonate passwords now it is a string 
-         :headers {"Content-Type" "text/csv"};but it is not true it is not reading right
-         :format :json
-         :handler (fn [response]
-                    (js/console.log "Saved the session to csv!" response)
-                    (callback response))
-         :error-handler (fn [error]
-                          (js/console.error "Failed to export csv:" error))})))
+  (let [user-profile-name (get @user-state :userProfileName);@=newuser
+        user-login-password (get @user-state :userLoginPassword);@=newuser
+        passwords  (get @user-state :passwords)];(mapv #(update-vals % deref) (get @user-state :passwords))=newuser
+    (js/console.log "Attempting to save csv!" callback)
+    (js/console.log "FE userProfileName: " (get user-state :userProfileName))
+    (js/console.log "FE userLoginPassword: " (get user-state :userLoginPassword))
+    (js/console.log "FE passwords: " (get user-state :passwords))
+    (js/console.log "newvalname: " user-profile-name)
+    (js/console.log "newvalpw: " user-login-password)
+    (js/console.log "newvalnotes: " passwords)
+    (ajax/POST "http://localhost:3000/save-current-session"
+      {:params {:userProfileName user-profile-name
+                :userLoginPassword user-login-password
+                :passwords  passwords};just added concatonate passwords now it is a string 
+       :headers {"Content-Type" "text/csv"};but it is not true it is not reading right
+       :format :json
+       :handler (fn [response]
+                  (js/console.log "Saved the session to csv!" response)
+                  (callback response))
+       :error-handler (fn [error]
+                        (js/console.error "Failed to export csv:" error))})))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             HTML Helpers            ;
@@ -212,9 +213,9 @@
         (do
           (println "pre handler csv" @csv-content)
           (js/setTimeout  ; Ensure csv-content is set before making request
-          (fn []
-            (request-existing-csv))  ; Make API request
-          100)
+           (fn []
+             (request-existing-csv))  ; Make API request
+           100)
           (reset! logged-in true))
         (do
 
@@ -246,18 +247,18 @@
 
 (defn new-password-func [e form-pName form-pContent form-pNotes error-message]
   (.preventDefault e)
-    (let [new-password
-          {:pName form-pName
-           :pContent form-pContent
-           :pNotes form-pNotes}]
-        (if (and (seq @form-pName) (seq @form-pContent))
-          (do
-            (reset! error-message "")
-            (swap! user-state update :passwords conj new-password);swap in the new password
-            (js/console.log "add PW CHECK: " (get @user-state :passwords))
-            (reset! show-add-form false)
-            #_(reset! error-message "New password entered!"))
-          (reset! error-message "All fields must be filled in"))))
+  (let [new-password
+        {:pName form-pName
+         :pContent form-pContent
+         :pNotes form-pNotes}]
+    (if (and (seq form-pName) (seq form-pContent))
+      (do
+        (reset! error-message "")
+        (swap! user-state update :passwords conj new-password);swap in the new password
+        (js/console.log "add PW CHECK: " (get @user-state :passwords))
+        (reset! show-add-form false)
+        #_(reset! error-message "New password entered!"))
+      (reset! error-message "All fields must be filled in"))))
 
 (defn copy-text-to-clipboard [pContent]
   (let [textarea (js/document.createElement "textarea")]

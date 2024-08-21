@@ -17,54 +17,57 @@
               :on-click click-handler}]]))
 
 (defn right-generation-column [form-numChar form-numUpper form-perSpaces form-perSym]
-    (fn []
-      [:form.generation-input-field-container
-       {:style {:align-items "center"
-                :transform "translate(-11vw, 0vh)"}}
-       [:h3 "Complexity Modifiers"]
-       [:input {:style {:width "30%"}
-                :type "text"
-                :id "numCharField"
-                :name "number-of-characters"
-                :placeholder "Total num chars"
-                :required false
-                :value @form-numChar
-                :on-change #(let [new-value (-> % .-target .-value)]
-                                 (when (re-matches #"\d*" new-value)
-                                   (reset! form-numChar new-value)))}]
-       [:input {:style {:width "30%"}
-                :type "text"
-                :id "numUpperField"
-                :name "number-of-upper-case"
-                :placeholder "% uppercase"
-                :required false
-                :value @form-numUpper
-                :on-change #(let [new-value (-> % .-target .-value)]
-                                 (when (re-matches #"\d*" new-value)
-                                   (reset! form-numUpper new-value)))}]
-       [:input {:style {:width "30%"}
-                :type "text"
-                :id "numSpaceField"
-                :name "number-of-spaces"
-                :placeholder "% spaces"
-                :required false
-                :value @form-perSpaces
-                :on-change #(let [new-value (-> % .-target .-value)]
-                                 (when (re-matches #"\d*" new-value)
-                                   (reset! form-perSpaces new-value)))}]
-       [:input {:style {:width "30%"}
-                :type "text"
-                :id "perSymField"
-                :name "number-of-symbols"
-                :placeholder "% symbols"
-                :required false
-                :value @form-perSym
-                :on-change #(let [new-value (-> % .-target .-value)]
-                                 (when (re-matches #"\d*" new-value)
-                                   (reset! form-perSym new-value)))}]]))
+  (fn []
+    [:form.generation-input-field-container
+     {:style {:align-items "center"
+              :transform "translate(-11vw, 0vh)"}}
+     [:h3 "Complexity Modifiers"]
+     [:input {:style {:width "30%"}
+              :type "text"
+              :id "numCharField"
+              :name "number-of-characters"
+              :placeholder "Total num chars"
+              :required false
+              :value @form-numChar
+              :on-change #(let [new-value (-> % .-target .-value)]
+                            (when (re-matches #"\d*" new-value)
+                              (reset! form-numChar new-value)))}]
+     [:input {:style {:width "30%"}
+              :type "text"
+              :id "numUpperField"
+              :name "number-of-upper-case"
+              :placeholder "% uppercase"
+              :required false
+              :value @form-numUpper
+              :on-change #(let [new-value (-> % .-target .-value)]
+                            (when (re-matches #"\d*" new-value)
+                              (reset! form-numUpper new-value)))}]
+     [:input {:style {:width "30%"}
+              :type "text"
+              :id "numSpaceField"
+              :name "number-of-spaces"
+              :placeholder "% spaces"
+              :required false
+              :value @form-perSpaces
+              :on-change #(let [new-value (-> % .-target .-value)]
+                            (when (re-matches #"\d*" new-value)
+                              (reset! form-perSpaces new-value)))}]
+     [:input {:style {:width "30%"}
+              :type "text"
+              :id "perSymField"
+              :name "number-of-symbols"
+              :placeholder "% symbols"
+              :required false
+              :value @form-perSym
+              :on-change #(let [new-value (-> % .-target .-value)]
+                            (when (re-matches #"\d*" new-value)
+                              (reset! form-perSym new-value)))}]]))
 
 (defn add-a-new-password-form [password-name password-content password-notes]
-  (let [error-message (r/atom "")]
+  (let [password-name (r/atom "")
+        password-content (r/atom "")
+        password-notes (r/atom "")
+        error-message (r/atom "")]
     (fn []
       [:form.generation-input-field-container ;change this from login container?
        [:h3 "Details"]
@@ -95,7 +98,7 @@
        [:input {:type "submit"
                 :value "Submit New Password"
                 :on-click (fn [e]
-                            (help/new-password-func e password-name password-content password-notes error-message))}]])))
+                            (help/new-password-func e @password-name @password-content @password-notes error-message))}]])))
 
 (defn center-generation-box [form-numChar form-numUpper form-perSpaces form-perSym password-content]
   [:div.center-generation-table
@@ -119,7 +122,7 @@
         form-perSym (r/atom "")]
     [:div.back-button-container
      [back-button]
-     [:div.pw-generation-header 
+     [:div.pw-generation-header
       [:h2 "Add a new password"]
       [:h3 "Manually enter your own password, or generate one based on the
            right side properties."]
@@ -154,26 +157,26 @@
 (defn copy-pw-components [pContent]
   (let [text (r/atom pContent)]
     (fn []
-       [:button
-        {:id "copy-pw-button"
-         :on-click #(help/copy-text-to-clipboard @text)}
-        "[]"])))
+      [:button
+       {:id "copy-pw-button"
+        :on-click #(help/copy-text-to-clipboard @text)}
+       "[]"])))
 
 (defn save-session-component [selected-export]
   (let [export-success (r/atom false)]
-      (fn []
-        [:div.export-container
-         [:button {:on-click (fn []
-                               (help/save-current-session
-                               (fn [csv-content]
-                                 (help/download-csv csv-content "passwords.csv")
-                                 (reset! export-success true)
-                                 (js/setTimeout #(reset! export-success false) 5000))))}
-          "Export CSV"]
-         (when @export-success
-           [:div {:style {:color "green"}} "Export Successful"])
-         #_[:div.selected-csv-path-container
-            (str "Selected File: " @file-name)]])))
+    (fn []
+      [:div.export-container
+       [:button {:on-click (fn []
+                             (help/save-current-session
+                              (fn [csv-content]
+                                (help/download-csv csv-content "passwords.csv")
+                                (reset! export-success true)
+                                (js/setTimeout #(reset! export-success false) 5000))))}
+        "Export CSV"]
+       (when @export-success
+         [:div {:style {:color "green"}} "Export Successful"])
+       #_[:div.selected-csv-path-container
+          (str "Selected File: " @file-name)]])))
 
 (defn heading-box []
   (if @help/logged-in
@@ -251,7 +254,7 @@
                             (reset! login true)
                             (println "Debug: File selected in nameinputcont callback:" @selected-file)
                             (when (some? @selected-file)
-                               (help/handle-file-selection @selected-file))
+                              (help/handle-file-selection @selected-file))
                             (help/handle-login-submission e profile-name login-password login error-message))}]
        [:input {:type "button"
                 :id "caccount-button"
@@ -265,41 +268,42 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn logged-in-view []
-  (let [user-state @help/user-state
-        profile-name (get user-state :userProfileName "Unknown")
-        passwords (get user-state :passwords [])]
-    [:div.main-container
-     [heading-box]
-     [:div
-      (when (not @help/show-add-form)
-        [:div
-         [:h2 {:style {:text-align "center"}}
-          (str "Hello " profile-name ", you logged in at " (current-time))];@=newuser
-         [:div {:style {:border-bottom "1pt solid #ede9f6"
-                        :width "max"
-                        :align-self "center"}}]
-         [plus-sign-component]])
-      (when @help/show-add-form
-        [generation-form-box])
-      (when (and (not @help/show-add-form) (empty? passwords))
-        [:div
-         "You have no passwords yet"])
-      (when (not @help/show-add-form)
-        [:ul
-         (doall
-          (map-indexed
-           (fn [index password]
-             ^{:key index}
-             [:li.password-list {:style {:list-style-type "numbered"
-                                         :border-bottom ".5pt solid #b5b8d39d"}}
-              "|-----Name-----: " (.toString (:pName password));@=newuser
-              [:div.pw-list-options
-               "|-PW Content-: " (.toString (:pContent password));@=newuser
-               [:div.pw-list-buttons
-                [delete-pw-component (:userProfileName @help/user-state) (:pName password)]
-                [copy-pw-components (:pContent password)]]];@=newuser
-              "|-----Notes-----: " (.toString (:pNotes password))])
-           (:passwords @help/user-state)))])]]))
+  (fn []
+    (let [user-state @help/user-state
+          profile-name (get user-state :userProfileName "Unknown")
+          passwords (get user-state :passwords)]
+      [:div.main-container
+       [heading-box]
+       [:div
+        (when (not @help/show-add-form)
+          [:div
+           [:h2 {:style {:text-align "center"}}
+            (str "Hello " profile-name ", you logged in at " (current-time))];@=newuser
+           [:div {:style {:border-bottom "1pt solid #ede9f6"
+                          :width "max"
+                          :align-self "center"}}]
+           [plus-sign-component]])
+        (when @help/show-add-form
+          [generation-form-box])
+        (when (and (not @help/show-add-form) (empty? passwords))
+          [:div
+           "You have no passwords yet"])
+        (when (not @help/show-add-form)
+          [:ul
+           (doall
+            (map-indexed
+             (fn [index password]
+               ^{:key index}
+               [:li.password-list {:style {:list-style-type "numbered"
+                                           :border-bottom ".5pt solid #b5b8d39d"}}
+                "|-----Name-----: " (get password :pName);@=newuser
+                [:div.pw-list-options
+                 "|-PW Content-: " (get password :pContent);@=newuser
+                 [:div.pw-list-buttons
+                  [delete-pw-component (:userProfileName @help/user-state) (:pName password)]
+                  [copy-pw-components (:pContent password)]]];@=newuser
+                "|-----Notes-----: " (get password :pNotes)])
+             (:passwords @help/user-state)))])]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 Frame               ;
