@@ -24,13 +24,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             HTTP Helpers            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (def user-state (r/atom {:userProfileName nil
                          :userLoginPassword nil
                          :passwords []}))
 
-(def logged-in (r/atom false));turn back to false to get normal operation
+(def logged-in (r/atom false))
 
-(def show-add-form (r/atom false)); true to speed up to generation
+(def show-add-form (r/atom false));true to speed up to generation
 
 (defn logout []
   (reset! user-state {:userProfileName nil
@@ -41,6 +42,7 @@
 (defn valid-login? [profile-name login-password]
   false) ;L->Placeholder for actual implementation
 
+;not being used currently
 (defn create-account [profile-name login-password]
   (js/console.log "Attempting to create account for:" profile-name)
   (ajax/POST "http://localhost:3000/create-account"
@@ -60,7 +62,7 @@
                 (reset! logged-in true))
      :error-handler (fn [error]
                       (js/console.error "Failed to create account:" error))}))
-
+;not being used currently
 (defn add-pw-request [profile-name login-password form-pName form-pContent form-pNotes]
   (let [new-password ;lots of extra detail in here to trim later
         {:pName form-pName
@@ -171,15 +173,30 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             HTML Helpers            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;bools for UI components
+(def editing-password (r/atom nil))
 
-(defn handle-login-submission [e profile-name login-password login error-message]
-  (.preventDefault e)
+(defn update-password [updated-password]
+  (swap! user-state update-in [:passwords]
+         (fn [passwords]
+           (mapv (fn [password]
+                   (if (= (:pName updated-password) (:pName password))
+                     updated-password
+                     password))
+                 passwords)))
+  (reset! editing-password nil))
+
+(defn handle-login-submission 
+  "This function either creates a blank slate user, or draws exising user
+   information from CSV using the above 'request-existing-csv' fn."
+  [event profile-name login-password login error-message]
+  (.preventDefault event)
   (if (and profile-name login-password (seq @profile-name) (seq @login-password))
     (do
       (println "Debug for readcsvonlogin: profile-name =" @profile-name)
       (println "Debug for readcsvonlogin: login-password =" @login-password)
       (println "Debug for readcsvonlogin: login =" login)
-      (.preventDefault e))
+      (.preventDefault event))
     (do
       (reset! error-message "All fields must be filled in")
       (println "Debug: Empty fields detected")))
@@ -207,7 +224,6 @@
           #_(reset! error-message "Account created successfully"))))
     (reset! error-message "All fields must be filled in")))
 
-
 ;deprecated and likely superfluous without multiple profiles
 (defn handle-add-new-password-submission [e form-pName form-pContent form-pNotes error-message]
   (.preventDefault e)
@@ -220,7 +236,10 @@
         #_(reset! error-message "New password entered!"))
       (reset! error-message "All fields must be filled in"))))
 
-(defn new-password-func [e form-pName form-pContent form-pNotes error-message]
+(defn new-password-func 
+  "This function adds a new password in to the front end user atom,
+   to be saved to csv prior to exiting."
+  [e form-pName form-pContent form-pNotes error-message]
   (.preventDefault e)
   (let [new-password
         {:pName form-pName
@@ -232,10 +251,13 @@
         (swap! user-state update :passwords conj new-password);swap in the new password
         (js/console.log "add PW CHECK: " (get @user-state :passwords))
         (reset! show-add-form false)
-        #_(reset! error-message "New password entered!"))
+        #_(reset! error-message "New password entered!"));Change this to a green login-success icon
       (reset! error-message "All fields must be filled in"))))
 
-(defn copy-text-to-clipboard [pContent]
+(defn copy-text-to-clipboard 
+  "Copies text to clipboard via js interop.
+      See -> clienthelpers.js"
+  [pContent]
   (let [textarea (js/document.createElement "textarea")]
     (set! (.-value textarea) pContent)
     (js/document.body.appendChild textarea)
@@ -245,7 +267,9 @@
     (js/document.body.removeChild textarea)
     (js/console.log "Text copied to clipboard!")))
 
-(defn download-csv [csv-content filename]
+(defn download-csv 
+  "Presents the user the generated csv for download in the browser window."
+  [csv-content filename]
   (let [blob (js/Blob. #js [csv-content] #js {:type "text/csv;charset=utf-8;"})
         link (js/document.createElement "a")]
     (set! (.-href link) (js/URL.createObjectURL blob))

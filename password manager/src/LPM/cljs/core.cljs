@@ -4,7 +4,7 @@
             [LPM.cljs.helpers :as help]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-                                        ;               Static                ;
+                                        ; Add a PW / PW Generation Components ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn back-button []
@@ -137,32 +137,6 @@
     (fn []
       (generation-form))))
 
-(defn plus-sign-component []
-  (let [click-handler
-        (fn [] (reset! help/show-add-form true))]
-    [:div.add-button-container
-     [:input {:type "button"
-              :id "plus-button"
-              :value "+"
-              :on-click click-handler}]]))
-
-(defn delete-pw-component [profile-name pName]
-  (let [click-handler
-        (fn [] (help/remove-pw-request profile-name pName))]
-    [:div.remove-button-container
-     [:input {:type "button"
-              :id "delete-pw-button"
-              :value "X"
-              :on-click click-handler}]]))
-
-(defn copy-pw-components [pContent]
-  (let [text (r/atom pContent)]
-    (fn []
-       [:button
-        {:id "copy-pw-button"
-         :on-click #(help/copy-text-to-clipboard @text)}
-        "[]"])))
-
 (defn save-session-component [selected-export]
   (let [export-success (r/atom false)]
       (fn []
@@ -268,6 +242,41 @@
                                         ;           If logged-in              ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn delete-pw-component [profile-name pName]
+  (let [click-handler
+        (fn [] (help/remove-pw-request profile-name pName))]
+    [:div.remove-button-container
+     [:input {:type "button"
+              :id "delete-pw-button"
+              :value "X"
+              :on-click click-handler}]]))
+
+(defn copy-pw-component [pContent]
+  (let [text (r/atom pContent)]
+    (fn []
+      [:button
+       {:id "copy-pw-button"
+        :on-click #(help/copy-text-to-clipboard @text)}
+       "[]"])))
+
+(defn edit-pw-component [password]
+  (let [text (r/atom password)]
+    (fn []
+      [:button
+       {:id "edit-pw-button"
+        :on-click #(reset! help/editing-password password)}
+       "Edit"])))
+
+(defn plus-sign-component []
+  (let [click-handler
+        (fn [] (reset! help/show-add-form true)
+          (reset! help/editing-password nil))]
+    [:div.add-button-container
+     [:input {:type "button"
+              :id "plus-button"
+              :value "+"
+              :on-click click-handler}]]))
+
 (defn logged-in-view []
   (fn []
     (let [user-state @help/user-state
@@ -286,25 +295,48 @@
            [plus-sign-component]])
         (when @help/show-add-form
           [generation-form-box])
+        (if @help/editing-password
+          [:ul
+           (js/console.log "editing pw")
+           [:li.password-list {:style {:list-style-type "numbered"
+                                       :border-bottom ".5pt solid #b5b8d39d"}}
+            [:input {:type "text"
+                     :value (:pName @help/editing-password)
+                     :on-change #(swap! help/editing-password assoc :pName (-> % .-target .-value))}]
+
+            [:input {:type "text"
+                     :value (:pContent @help/editing-password)
+                     :on-change #(swap! help/editing-password assoc :pContent (-> % .-target .-value))}]
+            [:input {:type "text"
+                     :value (:pNotes @help/editing-password)
+                     :on-change #(swap! help/editing-password assoc :pNotes (-> % .-target .-value))}]
+            [:div.edit-pw-list-buttons
+             [:button
+              {:on-click #(help/update-password @help/editing-password)}
+              "Save"]
+             [:button
+              {:on-click #(reset! help/editing-password nil)}
+              "Cancel"]]]]
+          (when (not @help/show-add-form)
+            [:ul
+             (doall
+              (map-indexed
+               (fn [index password]
+                 ^{:key index}
+                 [:li.password-list {:style {:list-style-type "numbered"
+                                             :border-bottom ".5pt solid #b5b8d39d"}}
+                  "|-----Name-----: " (get password :pName);@=newuser
+                  [:div.pw-list-options
+                   "|-PW Content-: " (get password :pContent);@=newuser
+                   [:div.pw-list-buttons
+                    [edit-pw-component password]
+                    [copy-pw-component (:pContent password)]
+                    [delete-pw-component (:userProfileName @help/user-state) (:pName password)]]];@=newuser
+                  "|-----Notes-----: " (get password :pNotes)])
+               (:passwords @help/user-state)))]))
         (when (and (not @help/show-add-form) (empty? passwords))
           [:div
-           "You have no passwords yet"])
-        (when (not @help/show-add-form)
-          [:ul
-           (doall
-            (map-indexed
-             (fn [index password]
-               ^{:key index}
-               [:li.password-list {:style {:list-style-type "numbered"
-                                           :border-bottom ".5pt solid #b5b8d39d"}}
-                "|-----Name-----: " (get password :pName);@=newuser
-                [:div.pw-list-options
-                 "|-PW Content-: " (get password :pContent);@=newuser
-                 [:div.pw-list-buttons
-                  [delete-pw-component (:userProfileName @help/user-state) (:pName password)]
-                  [copy-pw-components (:pContent password)]]];@=newuser
-                "|-----Notes-----: " (get password :pNotes)])
-             (:passwords @help/user-state)))])]])))
+           "You have no passwords yet"])]])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 Frame               ;
@@ -346,33 +378,3 @@
                (.getElementById js/document "app")))
 
 (start)
-
-
-(comment
-  ;TODOS
-  ;On-Login needs to require a path
-  
-  ;Handle Validation/Authentification
-
-  ;Encryption/Decrpytion
-  
-  ;Update Passwords
-  
-  ;There should be a check to prevent multiple of the same password
-  
-  ;improve the layout of the passwords on the login page
-     ;ie move the bullet point to the center item
-     ;make the copy edit buttons appear more nicely
-  
-  ;Sort Passwords
-  
-  ;Group Passwords
-  
-  ;Password Hotkeys
-  
-  ;Add default values to the add pw page (for default pw generation)
-  
-  ;prompt the user before deleting or closing without saving
-  
-  ;submitting fast can submit multiple of the same password and cause issue
-  )

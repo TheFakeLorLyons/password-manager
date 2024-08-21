@@ -310,6 +310,7 @@ button {
   border-radius: 4px;
   font-family: Cambria;
 }
+#edit-pw-button:hover,
 #generate-pw-button:hover,
 #copy-pw-button:hover,
 button:hover {
@@ -323,6 +324,7 @@ button:hover {
   cursor: pointer;
   transform: translate(1vw, -0.2vh)
 }
+#edit-pw-button,
 #copy-pw-button {
   padding: 5px;
   font-weight: bold;
@@ -336,6 +338,25 @@ button:hover {
 }
 
 
+.password-list-labels {
+  display: flex;
+  justify-content: space-between;
+  color: blue;
+  font-weight: bold;
+}
+
+.password-list-content {
+  margin-left: 20px;
+}
+
+.password-list-name-label,
+.password-list-notes-label {
+  flex-basis: 25%;
+}
+
+.pw-list-options {
+  flex-basis: 50%;
+}
 
 
 /*Not implemented*/
