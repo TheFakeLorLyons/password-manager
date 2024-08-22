@@ -44,26 +44,30 @@
 
   (POST "/request-existing-csv" {:keys [body]} 
     (println "Back End attempt to read csv" body)
-    (let [user-data (io/csv-to-current-user body)]
-    (if user-data
-      (do
-        (println "CSV credentials successfully processed" - user-data)
-          {:status 200
-           :headers {"Content-Type" "application/json"}
-           :body (cjson/write-str user-data)})
-      (do
-        (println "Login failed")
-        {:status 401
-         :headers {"Content-Type" "application/json"}
-         :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})}))))
+    (let [profile-name (get body "userProfileName")
+          login-password (get body "userLoginPassword")
+          user-data (io/csv-to-current-user (get body "csv-content"))]
+    (and user-data
+         (if (and (= profile-name (:userProfileName user-data))
+                  (= login-password (:userLoginPassword user-data)))
+           (do
+             (println "CSV credentials successfully processed" - user-data)
+             {:status 200
+              :headers {"Content-Type" "application/json"}
+              :body (cjson/write-str user-data)})
+           (do
+             (println "Invalid Credentials")
+             {:status 401
+              :headers {"Content-Type" "application/json"}
+              :body (cjson/write-str {:message "Login failed. Profile name or password mismatch."})})))))
 
   (POST "/save-current-session" {:keys [body]}
     (let [profile-name (get body "userProfileName")
           login-password (get body "userLoginPassword")
           passwords (get body "passwords")
           user-profile {:users {"profile" {:userProfileName profile-name
-                                              :userLoginPassword login-password
-                                              :passwords passwords}}}
+                                           :userLoginPassword login-password
+                                           :passwords passwords}}}
           csv-content (io/generate-csv user-profile)]
             (println "Received request body:" body)
       (println "Generated namw:" profile-name)
@@ -80,10 +84,10 @@
                      "Content-Disposition" "attachment; filename=\"passwords.csv\""}
            :body csv-content})
         (do
-          (println "Login failed")
+          (println "Export failed")
           {:status 401
            :headers {"Content-Type" "application/json"}
-           :body (cjson/write-str {:message "Login failed. Profile or password mismatch."})}))))
+           :body (cjson/write-str {:message "Exporting user profile failed"})}))))
 
   (GET "/generate-a-password" request
     (println "Received pws:" request)

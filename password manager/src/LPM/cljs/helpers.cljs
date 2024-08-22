@@ -112,10 +112,12 @@
                       :error-handler (fn [error]
                                        (reject error))}))))))
 
-(defn request-existing-csv []
+(defn request-existing-csv [profile-name login-password]
   (js/console.log "attempting to read csv:" @csv-content)
   (ajax/POST "http://localhost:3000/request-existing-csv"
-    {:params @csv-content
+    {:params {:csv-content @csv-content
+              :userProfileName profile-name
+              :userLoginPassword login-password}
      :headers {"Content-Type" "application/json"}
      :format :json
      :response-format :json
@@ -134,8 +136,7 @@
                             {:pName pName
                              :pContent pContent
                              :pNotes pNotes}))
-                        (get response "passwords")))
-                      pwMap (get response "passwords")]
+                        (get response "passwords")))]
                   (js/console.log "Logged in successfully:" profile)
                   (reset! user-state {:userProfileName profile-name
                                       :userLoginPassword login-password
@@ -145,6 +146,7 @@
                 (js/console.log "passwords on obtaining profile:" (@user-state :passwords))
                 (reset! logged-in true))
      :error-handler (fn [error]
+                      (reset! logged-in false)
                       (js/console.error "Failed obtain user profile:" error))}))
 
 (defn save-current-session [callback]
@@ -209,7 +211,7 @@
           (println "pre handler csv" @csv-content)
           (js/setTimeout  ; Ensure csv-content is set before making request
            (fn []
-             (request-existing-csv))  ; Make API request
+             (request-existing-csv @profile-name @login-password))  ; Make API request
            100)
           (reset! logged-in true))
         (do
