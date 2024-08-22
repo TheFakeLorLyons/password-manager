@@ -259,12 +259,12 @@
         :on-click #(help/copy-text-to-clipboard @text)}
        "[]"])))
 
-(defn edit-pw-component [password]
-  (let [text (r/atom password)]
+(defn edit-pw-component [editing-password]
+  (let [text (r/atom editing-password)]
     (fn []
       [:button
        {:id "edit-pw-button"
-        :on-click #(reset! help/editing-password password)}
+        :on-click #(reset! help/editing-password editing-password)}
        "Edit"])))
 
 (defn plus-sign-component []
@@ -277,6 +277,56 @@
               :value "+"
               :on-click click-handler}]]))
 
+(defn greeting [profile-name]
+  [:div
+   [:h2 {:style {:text-align "center"}}
+    (str "Hello " profile-name ", you logged in at " (current-time))];@=newuser
+   [:div {:style {:border-bottom "1pt solid #ede9f6"
+                  :width "max"
+                  :align-self "center"}}]
+   [plus-sign-component]])
+
+(defn standard-pw-list-view []
+  [:ul
+   (doall
+    (map-indexed
+     (fn [index password]
+       ^{:key index}
+       [:li.password-list {:style {:list-style-type "numbered"
+                                   :border-bottom ".5pt solid #b5b8d39d"}}
+        "|-----Name-----: " (get password :pName);
+        [:div.pw-list-options
+         "|-PW Content-: " (get password :pContent);
+         [:div.pw-list-buttons
+          [edit-pw-component password]
+          [copy-pw-component (:pContent password)]
+          [delete-pw-component (:userProfileName @help/user-state) (:pName password)]]]
+        "|-----Notes-----: " (get password :pNotes)])
+     (:passwords @help/user-state)))]);taking the passwords from user state and iterating the above
+
+(defn editing-pw-view []
+  (fn []
+    [:ul
+     [:li.password-list {:style {:list-style-type "numbered"
+                                 :border-bottom ".5pt solid #b5b8d39d"}}
+      [:input {:type "text"
+               :value (:pName @help/editing-password)
+               :on-change #(swap! help/editing-password assoc :pName (-> % .-target .-value))}]
+
+      [:input {:type "text"
+               :value (:pContent @help/editing-password)
+               :on-change #(swap! help/editing-password assoc :pContent (-> % .-target .-value))}]
+      [:input {:type "text"
+               :value (:pNotes @help/editing-password)
+               :on-change #(swap! help/editing-password assoc :pNotes (-> % .-target .-value))}]
+      [:div.edit-pw-list-buttons
+       [:button
+        {:on-click #(help/update-password @help/editing-password)}
+        "Save"]
+       [:button
+        {:on-click #(reset! help/editing-password nil)}
+        "Cancel"]]]]));displays the specific password to be edited
+
 (defn logged-in-view []
   (fn []
     (let [user-state @help/user-state
@@ -286,54 +336,13 @@
        [heading-box]
        [:div
         (when (not @help/show-add-form)
-          [:div
-           [:h2 {:style {:text-align "center"}}
-            (str "Hello " profile-name ", you logged in at " (current-time))];@=newuser
-           [:div {:style {:border-bottom "1pt solid #ede9f6"
-                          :width "max"
-                          :align-self "center"}}]
-           [plus-sign-component]])
+          [greeting profile-name])
         (when @help/show-add-form
           [generation-form-box])
         (if @help/editing-password
-          [:ul
-           (js/console.log "editing pw")
-           [:li.password-list {:style {:list-style-type "numbered"
-                                       :border-bottom ".5pt solid #b5b8d39d"}}
-            [:input {:type "text"
-                     :value (:pName @help/editing-password)
-                     :on-change #(swap! help/editing-password assoc :pName (-> % .-target .-value))}]
-
-            [:input {:type "text"
-                     :value (:pContent @help/editing-password)
-                     :on-change #(swap! help/editing-password assoc :pContent (-> % .-target .-value))}]
-            [:input {:type "text"
-                     :value (:pNotes @help/editing-password)
-                     :on-change #(swap! help/editing-password assoc :pNotes (-> % .-target .-value))}]
-            [:div.edit-pw-list-buttons
-             [:button
-              {:on-click #(help/update-password @help/editing-password)}
-              "Save"]
-             [:button
-              {:on-click #(reset! help/editing-password nil)}
-              "Cancel"]]]]
+          [editing-pw-view]
           (when (not @help/show-add-form)
-            [:ul
-             (doall
-              (map-indexed
-               (fn [index password]
-                 ^{:key index}
-                 [:li.password-list {:style {:list-style-type "numbered"
-                                             :border-bottom ".5pt solid #b5b8d39d"}}
-                  "|-----Name-----: " (get password :pName);@=newuser
-                  [:div.pw-list-options
-                   "|-PW Content-: " (get password :pContent);@=newuser
-                   [:div.pw-list-buttons
-                    [edit-pw-component password]
-                    [copy-pw-component (:pContent password)]
-                    [delete-pw-component (:userProfileName @help/user-state) (:pName password)]]];@=newuser
-                  "|-----Notes-----: " (get password :pNotes)])
-               (:passwords @help/user-state)))]))
+            [standard-pw-list-view]))
         (when (and (not @help/show-add-form) (empty? passwords))
           [:div
            "You have no passwords yet"])]])))

@@ -161,8 +161,8 @@
     (ajax/POST "http://localhost:3000/save-current-session"
       {:params {:userProfileName user-profile-name
                 :userLoginPassword user-login-password
-                :passwords  passwords};just added concatonate passwords now it is a string 
-       :headers {"Content-Type" "text/csv"};but it is not true it is not reading right
+                :passwords  passwords}
+       :headers {"Content-Type" "text/csv"}
        :format :json
        :handler (fn [response]
                   (js/console.log "Saved the session to csv!" response)
