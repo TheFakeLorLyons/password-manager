@@ -6,7 +6,6 @@
             [ring.middleware.session.cookie :refer [cookie-store]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.cors :refer [wrap-cors]]
-            [clojure.data.json :as cjson]
             [LPM.clj.handlers :as hnd]))
 
 (defroutes app-routes
