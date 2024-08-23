@@ -39,51 +39,6 @@
                       :passwords []})
   (reset! logged-in false))
 
-(defn valid-login? [profile-name login-password]
-  false) ;L->Placeholder for actual implementation
-
-;not being used currently
-(defn create-account [profile-name login-password]
-  (js/console.log "Attempting to create account for:" profile-name)
-  (ajax/POST "http://localhost:3000/create-account"
-    {:params {:userProfileName @profile-name
-              :userLoginPassword @login-password}
-     :headers {"Content-Type" "application/json"}
-     :format :json
-     :response-format :json
-     :handler (fn [response]
-                (js/console.log "Account created:" response)
-                (swap! user-state assoc :userProfileName @profile-name)
-                (swap! user-state assoc :userLoginPassword @login-password)
-                (swap! user-state assoc :passwords [])
-                (js/console.log "FE userProfileName: " (get @user-state [:userProfileName]))
-                (js/console.log "FE userLoginPassword: " (get @user-state [:userLoginPassword]))
-                (js/console.log "FE passwords: " (get @user-state [:passwords]))
-                (reset! logged-in true))
-     :error-handler (fn [error]
-                      (js/console.error "Failed to create account:" error))}))
-;not being used currently
-(defn add-pw-request [profile-name login-password form-pName form-pContent form-pNotes]
-  (let [new-password ;lots of extra detail in here to trim later
-        {:pName form-pName
-         :pContent form-pContent
-         :pNotes form-pNotes}
-        current-passwords (get-in @user-state [:users profile-name :passwords])]
-    (ajax/POST "http://localhost:3000/add-a-new-password"
-      {:params {:userProfileName profile-name
-                :userLoginPassword login-password
-                :passwords (conj current-passwords new-password)}
-       :headers {"Content-Type" "application/json"}
-       :format :json
-       :response-format :json
-       :handler (fn [response]
-                  (js/console.log "Added a new password:" response)
-                  (swap! user-state update :passwords conj new-password)
-                  (js/console.log "add PW CHECK: " (get @user-state :passwords))
-                  (reset! show-add-form false))
-       :error-handler (fn [error]
-                        (js/console.error "Failed to add password:" error))})))
-
 (defn remove-pw-request [profile-name pName]
   (ajax/DELETE "http://localhost:3000/remove-a-password"
     {:params {:userProfileName profile-name
@@ -226,18 +181,6 @@
           #_(reset! error-message "Account created successfully"))))
     (reset! error-message "All fields must be filled in")))
 
-;deprecated and likely superfluous without multiple profiles
-(defn handle-add-new-password-submission [e form-pName form-pContent form-pNotes error-message]
-  (.preventDefault e)
-  (let [profile-name (get-in @user-state [:userProfileName])
-        login-password (get-in @user-state [:userLoginPassword])]
-    (if (and (seq @form-pName) (seq @form-pContent))
-      (do
-        (reset! error-message "")
-        (add-pw-request profile-name login-password @form-pName @form-pContent @form-pNotes)
-        #_(reset! error-message "New password entered!"))
-      (reset! error-message "All fields must be filled in"))))
-
 (defn new-password-func 
   "This function adds a new password in to the front end user atom,
    to be saved to csv prior to exiting."
@@ -255,6 +198,15 @@
         (reset! show-add-form false)
         #_(reset! error-message "New password entered!"));Change this to a green login-success icon
       (reset! error-message "All fields must be filled in"))))
+
+(defn remove-a-password
+  [pw-to-remove]
+  (let [pw-string (:pName pw-to-remove)]
+  (swap! user-state update-in
+         [:passwords]
+         (fn [passwords]
+           (let [updated-passwords (remove #(= (:pName %) pw-string) passwords)]
+             updated-passwords)))))
 
 (defn copy-text-to-clipboard 
   "Copies text to clipboard via js interop.

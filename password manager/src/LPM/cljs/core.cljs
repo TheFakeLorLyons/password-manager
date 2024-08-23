@@ -137,7 +137,7 @@
     (fn []
       (generation-form))))
 
-(defn save-session-component [selected-export]
+(defn save-session-component []
   (let [export-success (r/atom false)]
       (fn []
         [:div.export-container
@@ -242,9 +242,9 @@
                                         ;           If logged-in              ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn delete-pw-component [profile-name pName]
+(defn delete-pw-component [password]
   (let [click-handler
-        (fn [] (help/remove-pw-request profile-name pName))]
+        #(help/remove-a-password password)]
     [:div.remove-button-container
      [:input {:type "button"
               :id "delete-pw-button"
@@ -300,7 +300,7 @@
          [:div.pw-list-buttons
           [edit-pw-component password]
           [copy-pw-component (:pContent password)]
-          [delete-pw-component (:userProfileName @help/user-state) (:pName password)]]]
+          [delete-pw-component password]]]
         "|-----Notes-----: " (get password :pNotes)])
      (:passwords @help/user-state)))]);taking the passwords from user state and iterating the above
 
@@ -370,7 +370,7 @@
               (reset! error-message "Please fill in both fields.")
               (do
                 (println "Debug: File selected in name-and-password-input callback:" @selected-file)
-                (if (and @selected-file (help/valid-login? profile-name password))
+                (if (and @selected-file (and profile-name password))
                   (do
                     (swap! @help/user-state assoc :current-user profile-name)
                     (println "csv is about to be read")

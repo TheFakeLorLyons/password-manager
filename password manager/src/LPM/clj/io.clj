@@ -1,7 +1,5 @@
 (ns LPM.clj.io
   (:require [clojure.data.csv :as csv]
-            [LPM.clj.user :as usr]
-            [clojure.java.io :as io]
             [clojure.string :as str])
   (:import (java.time Instant)))
 
