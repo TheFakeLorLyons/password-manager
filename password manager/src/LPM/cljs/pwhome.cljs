@@ -9,6 +9,28 @@
 (defn current-time []
   (.toLocaleString (js/Date.)))
 
+(defn rainbow-export []
+  [:div.rainbow-text
+    [:div {:style {:color  "#290c35"}}
+     (str "Export...")] 
+   (str "Encrypted 0_0")])
+
+(defn export-encrypted-component []
+  (let [export-success (r/atom false)]
+    (fn []
+      [:div.export-container
+       [:button {:on-click (fn []
+                             (help/export-encrypted-csv
+                              (fn [csv-content]
+                                (help/download-csv csv-content "encrypted.csv")
+                                (reset! export-success true)
+                                (js/setTimeout #(reset! export-success false) 5000))))}
+        [rainbow-export]]
+       (when @export-success
+         [:div {:style {:color "#66ff00"
+                        :transform "translate(5vh, 0vh)"
+                        :text-weight "bold"}}])])))
+
 (defn save-session-component []
   (let [export-success (r/atom false)]
     (fn []
@@ -37,7 +59,8 @@
                             (help/logout))} "Logout"]]
      (when (not @help/show-add-form)
        [:div.logged-in-io-buttons
-        [save-session-component]])]
+        [save-session-component]
+        [export-encrypted-component]])]
     [:div.heading-container
      [:h1 "Lor's Password Manager"]]))
 

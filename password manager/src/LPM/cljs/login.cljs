@@ -1,12 +1,16 @@
 (ns LPM.cljs.login
   (:require [reagent.core :as r]
-            [reagent.dom :as rdom]
-            [LPM.cljs.helpers :as help]
-            [LPM.cljs.pwhome :as home]))
+            [LPM.cljs.helpers :as help]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;             Login-Page              ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn rainbow-login []
+  [:div.rainbow-text {:style {:justify-content "center"}}
+   [:div {:style {:color "#290c35"}}
+    (str "Login...")]
+   (str "Encrypted!")])
 
 (defn directory-box [selected-file]
   (let [file (r/atom selected-file)
@@ -54,8 +58,16 @@
        [:div.error-message {:class (when (seq @error-message) "visible")}
         (when (seq @error-message)
           [:p @error-message])]
+       [:button.rainbow-button 
+        {:on-click (fn [e]
+                     (.preventDefault e)
+                     (reset! login true)
+                     (when (some? @selected-file)
+                       (help/handle-file-selection @selected-file))
+                     (help/handle-login-encrypted e profile-name login-password login error-message))}
+        [rainbow-login]]       
        [:input {:type "submit"
-                :value "Login"
+                :value "Login (unencrypted)"
                 :on-click (fn [e]
                             (.preventDefault e)
                             (reset! login true)

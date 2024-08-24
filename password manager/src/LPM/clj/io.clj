@@ -1,7 +1,8 @@
 (ns LPM.clj.io
   (:require [clojure.data.csv :as csv]
-            [clojure.string :as str])
-  (:import (java.time Instant)))
+            [clojure.string :as str]
+            [LPM.clj.setup :as sup]
+            [LPM.clj.sensitive :as sns]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;     converting csv data to atom     ;
@@ -35,3 +36,32 @@
         csv-data (cons user-info data)]
     (with-out-str
       (csv/write-csv *out* csv-data))))
+
+(defn generate-encrypted-csv [current-user]
+  (let [keys (sup/load-keys)
+        secret-key (:secret-key keys)
+        profile (get-in current-user [:users "profile"])
+        user-info [(get profile :userProfileName)
+                   (sns/encrypt (get profile :userLoginPassword) secret-key)]
+        passwords (get profile :passwords)
+        data (for [password passwords]
+               [(get password "pName")
+                (sns/encrypt (get password "pContent") secret-key)
+                (sns/encrypt (get password "pNotes") secret-key)])
+        csv-data (cons user-info data)]
+    (with-out-str
+      (csv/write-csv *out* csv-data))))
+
+(defn read-encrypted-csv [csv-data]
+  (let [keys (sup/load-keys)
+        secret-key (:secret-key keys)
+        csv-content (csv/read-csv csv-data)
+        [user-info & passwords] csv-content
+        [username encrypted-password] user-info
+        decrypted-user {:userProfileName username
+                        :userLoginPassword (sns/decrypt encrypted-password secret-key)}
+        decrypted-passwords (for [[name encrypted-content encrypted-notes] passwords]
+                              {"pName" name
+                               "pContent" (sns/decrypt encrypted-content secret-key)
+                               "pNotes" (sns/decrypt encrypted-notes secret-key)})]
+    {:profile (assoc decrypted-user :passwords decrypted-passwords)}))
