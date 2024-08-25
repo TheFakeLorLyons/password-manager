@@ -1,4 +1,5 @@
-{:deps {buddy/buddy-auth {:mvn/version "3.0.323"
+{:deps {org.bouncycastle/bcprov-jdk18on {:mvn/version "1.78.1"}
+        buddy/buddy-auth {:mvn/version "3.0.323"
                           :exclusions [buddy/buddy-core]}
         buddy/buddy-hashers {:mvn/version "2.0.167"}
         cljs-ajax/cljs-ajax {:mvn/version "0.8.4"}

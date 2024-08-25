@@ -12,13 +12,10 @@
 (defroutes app-routes
   (POST "/request-existing-csv" [] hnd/request-existing-csv)
   (POST "/save-current-session" [] hnd/save-current-session)
-  (POST "/export-encrypted" [] hnd/export-encrypted)
-  (POST "/mark-setup-complete" [] sup/mark-setup-complete)
   (POST "/generate-keys" [] hnd/generate-keys-handler)
-  (POST "/import-encrypted" [] hnd/import-encrypted)
-  (POST "/export-encrypted" [] hnd/export-encrypted)
+  (POST "/import-encrypted-csv" [] hnd/import-encrypted)
+  (POST "/export-encrypted-csv" [] hnd/export-encrypted-csv)
   (POST "/save-keys" [] hnd/save-keys)
-  (POST "/mark-setup-complete" [] hnd/mark-setup-complete)
 
   (GET "/generate-a-password" [] hnd/generate-a-password)
   (GET "/check-setup-status" [] hnd/check-setup-status))

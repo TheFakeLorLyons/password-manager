@@ -38,17 +38,23 @@
       (csv/write-csv *out* csv-data))))
 
 (defn generate-encrypted-csv [current-user]
+  (println "in IO:" current-user)
   (let [keys (sup/load-keys)
         secret-key (:secret-key keys)
-        profile (get-in current-user [:users "profile"])
-        user-info [(get profile :userProfileName)
-                   (sns/encrypt (get profile :userLoginPassword) secret-key)]
-        passwords (get profile :passwords)
+        _ (println "Secret key (base64) in gen-encry-key:" secret-key)
+        user-info [(get current-user "userProfileName")
+                   (sns/encrypt (get current-user "userLoginPassword") secret-key)]
+        _ (println "user-info):" user-info)
+        passwords (get current-user "passwords")
+        _ (println "passwords:" passwords)
         data (for [password passwords]
                [(get password "pName")
                 (sns/encrypt (get password "pContent") secret-key)
                 (sns/encrypt (get password "pNotes") secret-key)])
-        csv-data (cons user-info data)]
+        _ (println "Secret key (base64):" data)
+        csv-data (cons user-info data)] 
+    _ (println "csv-data:" csv-data)
+    (println "Secret key (base64) in gen-encry-key:" secret-key)
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
@@ -64,4 +70,9 @@
                               {"pName" name
                                "pContent" (sns/decrypt encrypted-content secret-key)
                                "pNotes" (sns/decrypt encrypted-notes secret-key)})]
+    (println "keys in handles" keys)
+    (println "csv content in handles" csv-content)
+    (println "user-info content in handles" user-info)
+    (println "pws: " decrypted-user)
+    (println "data in handles" decrypted-passwords) 
     {:profile (assoc decrypted-user :passwords decrypted-passwords)}))

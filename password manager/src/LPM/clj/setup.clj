@@ -1,5 +1,6 @@
 (ns LPM.clj.setup
   (:require [clojure.java.io :as io]
+            [clojure.data.json :as cjson]
             [clojure.edn :as edn])
   (:import [java.security SecureRandom]
            [java.util Base64]))
@@ -8,6 +9,9 @@
 
 (defn- bytes->hex [bytes]
   (.encodeToString (Base64/getEncoder) bytes))
+
+(defn base64->bytes [base64-str]
+  (.decode (Base64/getDecoder) base64-str))
 
 (defn generate-keys []
   (let [key-gen (SecureRandom.)
@@ -25,17 +29,19 @@
 
 (defn save-keys [keys]
   (println "saving keys in setup.clj")
-  (spit key-file (pr-str keys)))
+  (let [current-time (java.time.Instant/now)
+        keys-with-metadata {:setup-complete true
+                            :completed-at current-time
+                            :public-key (:public-key keys)
+                            :secret-key (:secret-key keys)}]
+    (spit key-file (cjson/write-str keys-with-metadata))
+    (println "saved?" keys-with-metadata)
+    keys-with-metadata))
 
 (defn load-keys []
-  (println "loading keys in setup.clj")
-  (if (.exists (io/file key-file))
-    (read-string (slurp key-file))
-    nil))
-
-(defn mark-setup-complete [keys]
-  (println "marking-setup-complete in setup.clj")
-  (let [setup-data {:setup-complete true
-                    :completed-at (java.time.Instant/now)
-                    :public-key (:public-key keys)}]
-    (spit key-file (pr-str setup-data))))
+  (let [file-content (slurp key-file)
+        _ (println "loaded parsed content" file-content)
+        parsed-content (cjson/read-str file-content :key-fn keyword)]
+    (println "loaded parsed content" parsed-content)
+    {:public-key (base64->bytes (:public-key parsed-content))
+     :secret-key (base64->bytes (:secret-key parsed-content))}))

@@ -53,7 +53,7 @@
          @loading?
          [:div.loadinggg
           [:img {:src "/assets/loading.gif"}]
-          [:p "Generating keys..."]]
+          [:p "Loading..."]]
 
          (not @setup-complete?)
          [isup/key-setup-component]

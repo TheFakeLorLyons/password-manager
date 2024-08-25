@@ -81,18 +81,6 @@
     (fn [error]
       (js/console.error "Fetch error:" error))))
 
-(defn mark-setup-complete [keys]
-    (js/console.log "Checking mark-setup-complete status: beginning")
-  (ajax/POST "http://localhost:3000/mark-setup-complete"
-    {:headers {"Content-Type" "application/json"}
-     :body (js/JSON.stringify keys)}
-    (fn [response]
-      (if (= (.-status response) 200)
-        (js/console.log "Setup complete")
-        (js/console.error "Failed to complete setup" (.-status response) (.-statusText response))))
-    (fn [error]
-      (js/console.error "Fetch error:" error))))
-
 (defn generate-keys []
   (js/Promise.
    (fn [resolve reject]
@@ -164,8 +152,8 @@
       {:params {:userProfileName user-profile-name
                 :userLoginPassword user-login-password
                 :passwords  passwords}
-       :headers {"Content-Type" "text/csv"}
        :format :json
+       :response-format :raw
        :handler (fn [response]
                   (callback response))
        :error-handler (fn [error]

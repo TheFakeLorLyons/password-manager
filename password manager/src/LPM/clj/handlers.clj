@@ -45,10 +45,13 @@
         :headers {"Content-Type" "application/json"}
         :body (cjson/write-str {:message "Exporting user profile failed"})})))
 
- (defn export-encrypted [request]
+ (defn export-encrypted-csv [request]
+   (println "exporting encrypted:" request)
    (let [body (:body request)
-         user-profile {:users {"profile" body}}
-         csv-content (io/generate-encrypted-csv user-profile)]
+         _ (println "body " body)
+         csv-content (io/generate-encrypted-csv body)]
+     (println "user profile" body)
+     (println "csv content in handles" csv-content)
      (if csv-content
        {:status 200
         :headers {"Content-Type" "text/csv"
@@ -82,13 +85,18 @@
         :body (cjson/write-str {:message "Failed to generate keys... "})})))
 
  (defn save-keys [request]
+   (println "trying to save keys")
    (let [body (:body request)
-         keys (get body "arr")
-         secret-key (nth keys 1)
-         public-key (nth keys 3)
+         secret-key (get body "secret-key")
+         public-key (get body "public-key")
          keys-to-save {:secret-key secret-key
                        :public-key public-key}
          saved-keys (sup/save-keys keys-to-save)]
+          (println "body" body)
+     (println "secret-key" secret-key)
+     (println "public-key" public-key)
+     (println "saved keys in handlers" keys-to-save)
+     (println "saved keys in handlers" saved-keys)
      (if saved-keys
        {:status 200
         :headers {"Content-Type" "application/json"}
@@ -96,24 +104,6 @@
        {:status 500
         :headers {"Content-Type" "application/json"}
         :body (cjson/write-str {:message "Failed to save keys... "})})))
- 
- (defn mark-setup-complete [request]
-   (println "save-keys-handler called" request)
-   (let [body (:body request)
-         keys (get body "arr")
-         secret-key (nth keys 1)
-         public-key (nth keys 3)
-         saved-keys {:secret-key secret-key
-                       :public-key public-key}
-         marked-file (sup/mark-setup-complete saved-keys)]
-     (println "received keys [hopefully] " saved-keys)
-     (if marked-file
-       {:status 200
-        :headers {"Content-Type" "application/json"}
-        :body (cjson/write-str saved-keys)}
-       {:status 500
-        :headers {"Content-Type" "application/json"}
-        :body (cjson/write-str {:message "Failed to mark setup file... "})})))
  
  (defn check-setup-status [request]
    (println "checking setup status...")
