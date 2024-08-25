@@ -11,7 +11,7 @@ body {
   font-size: var(--font-size-base);
   color: #d5def5d4;
 }
-
+.setup-main-container,
 .main-container {
   display: flex;
   flex-direction: column;
@@ -56,6 +56,7 @@ body {
   max-width: 25%;
 }
 /* Styling for the heading box */
+.setup-heading,
 .heading-container {
   text-align: center;
   border-radius: 8px;
@@ -74,7 +75,11 @@ body {
   max-width: 100%;
   background: radial-gradient(rgba(101, 67, 181, 0.472),rgba(19, 5, 26, 0.001) 60%);
   box-sizing: border-box;
-  margin-bottom: 3vh;
+  margin-bottom: 1.5vh;
+}
+.logged-in-io-buttons {
+  display: flex;
+  gap: 1.75vw;
 }
 /*Path Directory Button on Login Page*/
 .selected-csv-path-container {
@@ -140,16 +145,22 @@ body {
 }
 /*Error messages if improper login*/
 .error-message {
-  display: none; /* Hide by default */
+  display: none; 
   color: red;
 }
 .error-message.visible {
-  display: block; /* Show when the class is applied */
+  display: block;
 }
 .error-message p {
-  margin: 0; /* Remove default paragraph margin */
+  margin: 0;
 }
-
+.loadinggg {
+  transform: scale(20%,20%);
+  text-align: center;
+  font-size: 124pt;
+  height: auto;      /* Keeps the aspect ratio */
+  width: auto;    
+}
 
 form { 
     display: flex;
@@ -278,6 +289,7 @@ form {
 #logout-button:hover {
  background-color: #b5b8d39d;
 }
+#input-back-button,
 #back-button {
   font-size: 20px;
   font-weight: 800;
@@ -357,6 +369,35 @@ button:hover {
 .pw-list-options {
   flex-basis: 50%;
 }
+
+.rainbow-button {
+  background-color: #ede9f6f3;
+  color: linear-gradient(45deg,  #290c35, blue, indigo, rgb(180, 94, 180), rgb(231, 74, 74), #ff22ae, rgb(26, 126, 26));
+  border: none;
+  padding: 3px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-family: Cambria;
+}
+.rainbow-button:hover {
+  background-color: #b5b8d39d;
+}
+
+.rainbow-text {
+  display: flex;
+  background: linear-gradient(45deg,  #290c35, blue, indigo, rgb(180, 94, 180), rgb(231, 74, 74), #ff22ae, rgb(26, 126, 26));
+  background-clip: text;
+  white-space: nowrap;
+  -webkit-background-clip: text;
+  color: transparent;
+  gap: .2vw;
+  font-family: Cambria;
+}
+
 
 
 /*Not implemented*/
