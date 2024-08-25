@@ -71,7 +71,7 @@
                                               :history (conj (:history @help/key-state) :generate)))}
                "Save and Complete Setup"]]
              [:div.loadinggg
-              [:img {:src "/../../resources/public/assets/loading.gif"}]
+              [:img {:src "../resources/public/assets/loading.gif"}]
               [:p "Generating keys..."]])]))})))
 
 

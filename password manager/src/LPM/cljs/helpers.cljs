@@ -54,20 +54,21 @@
                                         ;               API Calls             ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn check-setup-status [callback]
-  (ajax/GET "/http://localhost:3000/check-setup-status"
+(defn check-setup [callback]
+  (ajax/GET "http://localhost:3000/check-setup-status"
     {:response-format :json
      :keywords? true
      :handler (fn [response]
                 (js/console.log "Checking setup status: response")
                 (println "Success:" response)
-                (callback (:body response)))
+                (reset! setup-complete (:setup-complete response))
+                (callback response))
      :error-handler (fn [error]
                       (println "Error:" error)
                       (callback false))}))
 
 (defn save-keys [keys]
-  (js/console.log "Checking save-keys: beginning")
+  (js/console.log "Checking save-keys: beginning" keys)
   (ajax/POST "http://localhost:3000/save-keys"
     {:headers {"Content-Type" "application/json"}
      :body (js/JSON.stringify keys)}
@@ -76,9 +77,9 @@
         (js/console.log "Keys saved successfully")
         (js/console.error "Failed to save keys"
                           (.-status response)
-                          (.-statusText response)))))
-  (.catch (fn [error]
-            (js/console.error "Fetch error:" error))))
+                          (.-statusText response))))
+    (fn [error]
+      (js/console.error "Fetch error:" error))))
 
 (defn mark-setup-complete [keys]
     (js/console.log "Checking mark-setup-complete status: beginning")
@@ -93,10 +94,8 @@
       (js/console.error "Fetch error:" error))))
 
 (defn generate-keys []
-  (js/console.log "Checking gen-keys setup: prime")
   (js/Promise.
    (fn [resolve reject]
-     (js/console.log "Checking gen-keys setup: second")
      (ajax/POST "http://localhost:3000/generate-keys"
        {:headers {"Content-Type" "application/json"}
         :response-format :json
