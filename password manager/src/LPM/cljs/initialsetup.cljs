@@ -66,7 +66,6 @@
                [:p "Public Key: " public]
                [copy-pw-component public]]
               [:button {:on-click #(do (help/save-keys @keys)
-                                       (help/mark-setup-complete @keys)
                                        (swap! help/key-state assoc :mode :complete
                                               :history (conj (:history @help/key-state) :generate)))}
                "Save and Complete Setup"]]
@@ -116,7 +115,6 @@
                                (let [keys {:secret-key (:secret-key @help/key-state)
                                            :public-key (:public-key @help/key-state)}]
                                  (help/save-keys keys)
-                                 (help/mark-setup-complete keys)
                                  (swap! help/key-state assoc :mode :complete
                                         :history (conj (:history @help/key-state) :manual)))
                                (swap! help/key-state assoc :error "Invalid key format. Keys should be 64-character hexadecimal strings."))}
