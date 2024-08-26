@@ -74,10 +74,10 @@
         secret-key (:secret-key keys)
         _ (println "secret-key " secret-key)
         [user-info & passwords] (str/split csv-content #"\n")
-        _ (println "user CONTENT IO " user-info)
+        _ (println "user content IO " user-info)
         [username encrypted-password] (str/split user-info #",")
-        _ (println "user info in read-enc " username "pw: " encrypted-password)
-        decrypted-user {:userProfileName csv-data
+        _ (println "user info to UN " username "pw: " encrypted-password)
+        decrypted-user {:userProfileName username
                         :userLoginPassword (sns/decrypt-entry encrypted-password secret-key)}
         _ (println "user decrypted-user IO " decrypted-user)
         decrypted-passwords (for [password-line passwords
