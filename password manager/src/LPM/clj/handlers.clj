@@ -46,7 +46,7 @@
         :body (cjson/write-str {:message "Exporting user profile failed"})})))
 
  (defn export-encrypted-csv [request]
-   (println "exporting encrypted:" request)
+   (println "exportin encrypted:" request)
    (let [body (:body request)
          _ (println "body " body)
          csv-content (io/generate-encrypted-csv body)]
@@ -63,6 +63,7 @@
 
  (defn import-encrypted [request]
    (let [csv-data (:body request)
+         _ (println "body " csv-data)
          decrypted-data (io/read-encrypted-csv csv-data)]
      (if decrypted-data
        {:status 200

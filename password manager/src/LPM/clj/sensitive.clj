@@ -1,5 +1,6 @@
 (ns LPM.clj.sensitive
-  (:require [buddy.hashers :as hashers])
+  (:require [buddy.hashers :as hashers]
+            [clojure.string :as str])
   (:import [org.bouncycastle.jce.provider BouncyCastleProvider]
            [javax.crypto Cipher]
            [javax.crypto.spec SecretKeySpec GCMParameterSpec]
@@ -17,10 +18,12 @@
     (.nextBytes (SecureRandom.) iv)
     iv))
 
-(defn- hex->bytes [hex-string]
-  (let [bytes (byte-array (/ (count hex-string) 2))]
-    (dotimes [i (count bytes)]
-      (aset-byte bytes i (Integer/parseInt (subs hex-string (* 2 i) (* 2 (+ i 1))) 16)))
+(defn hex->bytes [hex-string]
+  (let [len (count hex-string)
+        bytes (byte-array (/ len 2))]
+    (doseq [i (range 0 len 2)]
+      (aset bytes (/ i 2)
+            (byte (Integer/parseInt (subs hex-string i (+ i 2)) 16))))
     bytes))
 
 (defn- bytes->hex [bytes]
@@ -48,43 +51,54 @@
         (= (count key-bytes) 24)  ; 192 bits
         (= (count key-bytes) 32)))) ; 256 bits
 
-
 (defn encrypt [data secret-key]
   (println "Inside sense" data)
   (println "Well? " (is-valid-aes-key? (bytes->base64 secret-key)))
   (println "Secret key (base64):" (bytes->base64 secret-key))
   (let [cipher (Cipher/getInstance "AES/GCM/NoPadding" "BC")
-        _ (println "Cipher instance created" cipher)
-        iv (byte-array iv-size)
-        _ (.nextBytes (SecureRandom.) iv)
-        _ (println "IV generated" iv)
-        gcm-spec (GCMParameterSpec. tag-size iv)
-        _ (println "GCMParameterSpec created" gcm-spec)
-        key-spec (SecretKeySpec. secret-key "AES")
-        _ (println "key-spec created" key-spec)]
-    (println "csv content in sensitive" key-spec)
-    (try
-      (println "try")
-      (.init cipher Cipher/ENCRYPT_MODE key-spec gcm-spec)
-      (let [data-bytes (.getBytes data "UTF-8")
-            encrypted (.doFinal cipher data-bytes)]
-        (println "Encrypted content:" (bytes->base64 encrypted))
-        (let [result (byte-array (concat iv encrypted))]
-          (println "Result byte array:" (bytes->base64 result))
-          (bytes->hex result)))
-      (catch Exception e
-        (println "Encryption error:" (.getMessage e))
-        nil))))
+       iv (generate-random-iv iv-size)
+       gcm-spec (GCMParameterSpec. tag-size iv)
+       key-spec (SecretKeySpec. secret-key "AES")]
 
-(defn decrypt [encrypted-data secret-key]
-  (let [cipher (Cipher/getInstance "AES/GCM/NoPadding")
-        all-bytes (hex->bytes encrypted-data)
-        iv (byte-array (take iv-size all-bytes))
-        encrypted (byte-array (drop iv-size all-bytes))
-        gcm-spec (GCMParameterSpec. tag-size iv)
-        key-spec (SecretKeySpec. (hex->bytes secret-key) "AES")]
-    (.init cipher Cipher/DECRYPT_MODE key-spec gcm-spec)
-    (String. (.doFinal cipher encrypted) "UTF-8")))
+   (println "IV generated (hex):" (bytes->hex iv))
+
+   (try
+     (.init cipher Cipher/ENCRYPT_MODE key-spec gcm-spec)
+     (let [data-bytes (.getBytes data "UTF-8")
+           encrypted (.doFinal cipher data-bytes)
+           result (byte-array (concat iv encrypted))]
+       (println "Encrypted content (base64):" (bytes->base64 result))
+       (bytes->base64 result)) ; Convert to base64 for storage
+     (catch Exception e
+       (println "Encryption error:" (.getMessage e))
+       nil))))
+
+(defn decrypt-entry [encrypted-data secret-key]
+  (println "Inside sense" encrypted-data "AND SECRET KEY: " secret-key)
+  (println "Well!? " (is-valid-aes-key? (bytes->base64 secret-key)))
+  (println "Read Enc key (base64):" (bytes->base64 secret-key))
+  (let [cipher (Cipher/getInstance "AES/GCM/NoPadding" "BC")
+       all-bytes (base64->bytes encrypted-data)
+       iv (byte-array iv-size)
+       encrypted (byte-array (- (count all-bytes) iv-size))]
+
+   (System/arraycopy all-bytes 0 iv 0 iv-size)
+   (System/arraycopy all-bytes iv-size encrypted 0 (count encrypted))
+
+   (println "IV (hex):" (bytes->hex iv))
+   (println "Encrypted data (hex):" (bytes->hex encrypted))
+
+   (let [gcm-spec (GCMParameterSpec. tag-size iv)
+         key-spec (SecretKeySpec. secret-key "AES")]
+     (try
+       (.init cipher Cipher/DECRYPT_MODE key-spec gcm-spec)
+       (let [decrypted-bytes (.doFinal cipher encrypted)]
+         (println "Decrypted bytes (hex):" (bytes->hex decrypted-bytes))
+         (String. decrypted-bytes "UTF-8"))
+       (catch Exception e
+         (println "Decryption error:" (.getMessage e))
+         (.printStackTrace e)
+         nil)))))
 
 (defn hash-password [login-password]
   (hashers/derive login-password {:alg :argon2id}))

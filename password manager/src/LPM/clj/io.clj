@@ -58,21 +58,34 @@
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
+(defn parse-encrypted-data [data-string]
+  (let [entries (str/split data-string #"\n")]
+    (into {} (map (fn [entry]
+                    (let [[label data] (str/split entry #",")]
+                      [label data]))
+                  entries))))
+
 (defn read-encrypted-csv [csv-data]
-  (let [keys (sup/load-keys)
+  (println "csv data " csv-data)
+  (let [csv-content (get csv-data "csv-content")
+        _ (println "csv data " csv-content)
+        keys (sup/load-keys)
+        _ (println "keys1 csv data " keys)
         secret-key (:secret-key keys)
-        csv-content (csv/read-csv csv-data)
-        [user-info & passwords] csv-content
-        [username encrypted-password] user-info
-        decrypted-user {:userProfileName username
-                        :userLoginPassword (sns/decrypt encrypted-password secret-key)}
-        decrypted-passwords (for [[name encrypted-content encrypted-notes] passwords]
-                              {"pName" name
-                               "pContent" (sns/decrypt encrypted-content secret-key)
-                               "pNotes" (sns/decrypt encrypted-notes secret-key)})]
-    (println "keys in handles" keys)
-    (println "csv content in handles" csv-content)
-    (println "user-info content in handles" user-info)
-    (println "pws: " decrypted-user)
-    (println "data in handles" decrypted-passwords) 
-    {:profile (assoc decrypted-user :passwords decrypted-passwords)}))
+        _ (println "secret-key " secret-key)
+        [user-info & passwords] (str/split csv-content #"\n")
+        _ (println "user CONTENT IO " user-info)
+        [username encrypted-password] (str/split user-info #",")
+        _ (println "user info in read-enc " username "pw: " encrypted-password)
+        decrypted-user {:userProfileName csv-data
+                        :userLoginPassword (sns/decrypt-entry encrypted-password secret-key)}
+        _ (println "user decrypted-user IO " decrypted-user)
+        decrypted-passwords (for [password-line passwords
+                                  :let [[name encrypted-content encrypted-notes] (str/split password-line #",")]]
+                              {:pName name
+                               :pContent (sns/decrypt-entry encrypted-content secret-key)
+                               :pNotes (sns/decrypt-entry encrypted-notes secret-key)})]
+    (println "DECRYPTED PWS! " decrypted-passwords)
+    {:userProfileName (:userProfileName decrypted-user)
+     :userLoginPassword (:userLoginPassword decrypted-user)
+     :passwords decrypted-passwords}))

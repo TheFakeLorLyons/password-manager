@@ -7,7 +7,6 @@
                                         ;              csv functions          ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def csv-content (r/atom nil))
-(def ecsv-content (r/atom nil))
 
 (defn read-file [file callback]
   (let [reader (js/FileReader.)]
@@ -115,8 +114,8 @@
                            (reject error))})))))
 
 (defn import-encrypted-csv [profile-name login-password]
-  (ajax/POST "http://localhost:3000/import-encrypted"
-    {:params {:csv-content @ecsv-content
+  (ajax/POST "http://localhost:3000/import-encrypted-csv"
+    {:params {:csv-content @csv-content
               :userProfileName profile-name
               :userLoginPassword login-password}
      :headers {"Content-Type" "application/json"}
