@@ -2,7 +2,8 @@
   (:require [clojure.data.csv :as csv]
             [clojure.string :as str]
             [LPM.clj.setup :as sup]
-            [LPM.clj.sensitive :as sns]))
+            [LPM.clj.sensitive :as sns]
+            [LPM.clj.auth :as auth]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;     converting csv data to atom     ;
@@ -41,11 +42,11 @@
   (println "in IO:" current-user)
   (let [keys (sup/load-keys)
         secret-key (:secret-key keys)
-        _ (println "Secret key (base64) in gen-encry-key:" secret-key)
+        _ (println "Secret key (base64) in gen-encry-key:" secret-key) 
         user-info [(get current-user "userProfileName")
-                   (sns/encrypt (get current-user "userLoginPassword") secret-key)]
+                   (get current-user "userLoginPassword")]
         _ (println "user-info):" user-info)
-        passwords (get current-user "passwords")
+        passwords (auth/hash-password (get current-user "userLoginPassword"))
         _ (println "passwords:" passwords)
         data (for [password passwords]
                [(get password "pName")
@@ -74,18 +75,20 @@
         secret-key (:secret-key keys)
         _ (println "secret-key " secret-key)
         [user-info & passwords] (str/split csv-content #"\n")
-        _ (println "user content IO " user-info)
-        [username encrypted-password] (str/split user-info #",")
-        _ (println "user info to UN " username "pw: " encrypted-password)
-        decrypted-user {:userProfileName username
-                        :userLoginPassword (sns/decrypt-entry encrypted-password secret-key)}
-        _ (println "user decrypted-user IO " decrypted-user)
-        decrypted-passwords (for [password-line passwords
-                                  :let [[name encrypted-content encrypted-notes] (str/split password-line #",")]]
-                              {:pName name
-                               :pContent (sns/decrypt-entry encrypted-content secret-key)
-                               :pNotes (sns/decrypt-entry encrypted-notes secret-key)})]
-    (println "DECRYPTED PWS! " decrypted-passwords)
-    {:userProfileName (:userProfileName decrypted-user)
-     :userLoginPassword (:userLoginPassword decrypted-user)
-     :passwords decrypted-passwords}))
+        _ (println "user CONTENT IO " user-info)
+        _ (println "Enteredpw" (get csv-data "userLoginPassword"))
+        [username existing-hashed-password] (str/split user-info #",")
+        auth-result (auth/authenticate (get csv-data "userLoginPassword") existing-hashed-password)]
+    (if (:authenticated auth-result)
+      (let [decrypted-user {:userProfileName username
+                            :userLoginPassword existing-hashed-password}
+            decrypted-passwords (for [password-line passwords
+                                      :let [[name encrypted-content encrypted-notes] (str/split password-line #",")]]
+                                  {:pName name
+                                   :pContent (sns/decrypt-entry encrypted-content secret-key)
+                                   :pNotes (sns/decrypt-entry encrypted-notes secret-key)})]
+        {:authenticated true
+         :userProfileName (:userProfileName decrypted-user)
+         :userLoginPassword (:userLoginPassword decrypted-user)
+         :passwords decrypted-passwords})
+      {:authenticated false})))

@@ -152,7 +152,7 @@
 (defn logged-in-view []
   (fn []
     (let [user-state @help/user-state
-          profile-name (get user-state :userProfileName "Unknown")
+          profile-name (:userProfileName user-state)
           passwords (get user-state :passwords)]
       [:div.main-container
        [heading-box]

@@ -79,4 +79,4 @@
                 :value "New?"
                 :on-click (fn [e]
                             (.preventDefault e)
-                            (help/handle-login-submission e profile-name login-password login error-message))}]])))
+                            (help/handle-login-submission e profile-name login-password nil error-message))}]])))

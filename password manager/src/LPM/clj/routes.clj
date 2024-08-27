@@ -6,10 +6,12 @@
             [ring.middleware.session.cookie :refer [cookie-store]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.cors :refer [wrap-cors]]
+            [buddy.auth.middleware :refer [wrap-authentication]]
             [LPM.clj.handlers :as hnd]
-            [LPM.clj.setup :as sup]))
+            [LPM.clj.auth :as auth]))
 
 (defroutes app-routes
+  (POST "/create-account" [] hnd/create-account)
   (POST "/request-existing-csv" [] hnd/request-existing-csv)
   (POST "/save-current-session" [] hnd/save-current-session)
   (POST "/generate-keys" [] hnd/generate-keys-handler)
@@ -27,7 +29,27 @@
                  :access-control-allow-methods [:get :post :delete :options])
       (wrap-session {:store (cookie-store)})
       (wrap-json-body)
-      (wrap-json-response)))
+      (wrap-json-response)
+      (wrap-authentication auth/auth-backend)))
 
 (defn -main [& args]
   (run-jetty handler {:port 3000 :join? false}))
+
+(comment (-main)
+         
+
+(defonce server (atom nil)) 
+         
+         (defn start-server []
+           (when @server
+             (.stop @server))  ; Stop the existing server if it's running
+           (reset! server (run-jetty #'handler {:port 3000 :join? false})))
+         
+         (defn stop-server []
+           (when @server
+             (.stop @server)
+             (reset! server nil)))  ; Clear the server reference after stopping
+         
+         (defn restart-server []
+           (stop-server)
+           (start-server)))

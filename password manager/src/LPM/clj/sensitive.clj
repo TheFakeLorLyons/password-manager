@@ -99,9 +99,3 @@
          (println "Decryption error:" (.getMessage e))
          (.printStackTrace e)
          nil)))))
-
-(defn hash-password [login-password]
-  (hashers/derive login-password {:alg :argon2id}))
-
-(defn verify-password [login-password hashed-password]
-  (hashers/verify login-password hashed-password))

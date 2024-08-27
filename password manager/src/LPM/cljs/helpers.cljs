@@ -182,8 +182,7 @@
                         (get response "passwords")))]
                   (reset! user-state {:userProfileName profile-name
                                       :userLoginPassword login-password
-                                      :passwords processed-passwords}))
-                (reset! logged-in true))
+                                      :passwords processed-passwords})))
      :error-handler (fn [error]
                       (reset! logged-in false)
                       (js/console.error "Failed obtain user profile:" error))}))
@@ -206,6 +205,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 CRUD                ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn create-account [profile-name login-password]
+  (js/console.log "Attempting to create account for:" profile-name)
+  (ajax/POST "http://localhost:3000/create-account"
+    {:params {:userProfileName @profile-name
+              :userLoginPassword @login-password}
+     :format :json
+     :response-format :json
+     :handler (fn [response]
+                (js/console.log "Full response:" (pr-str response))
+                (let [body (or (:body response) response)
+                      _ (js/console.log "Body:" (pr-str body))]
+                  (if (and (map? body) (contains? body "userProfileName"))
+                    (do
+                      (swap! user-state merge {:userProfileName (get body "userProfileName")
+                                               :userLoginPassword (get body "userLoginPassword")
+                                               :passwords (get body "passwords")})
+                      (js/console.log "Updated user-state:" (pr-str @user-state)))
+                    (js/console.error "Unexpected response format:" (pr-str body)))))
+     :error-handler (fn [error]
+                      (js/console.error "Failed to create account:" error))}))
 
 (defn handle-login-encrypted
   "This function either creates a blank slate user, or draws exising user
@@ -236,7 +256,7 @@
     (do
       (reset! error-message "")
 
-      (if @login
+      (if login
         (do
           (js/setTimeout  ;Ensure csv-content is set before making request
            (fn []
@@ -244,10 +264,7 @@
            100)
           (reset! logged-in true))
         (do
-
-          (reset! user-state  {:userProfileName @profile-name
-                               :userLoginPassword @login-password
-                               :passwords []})
+          (create-account profile-name login-password)
           (reset! logged-in true))))
     (reset! error-message "All fields must be filled in")))
 

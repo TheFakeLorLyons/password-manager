@@ -30,7 +30,13 @@
                                 org.slf4j/slf4j-nop]}
         ring/ring-json {:mvn/version "0.5.1"}}
  :paths ["src"]
- :aliases
- {:prod {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
-  :dev {:extra-paths ["dev"]
-        :extra-deps {ring/ring-devel {:mvn/version "1.12.2"}}}}}
+ :aliases {:prod {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
+           :dev {:extra-paths ["dev"]
+                 :extra-deps {ring/ring-devel {:mvn/version "1.12.2"}}}
+           :flowstorm-local {:classpath-overrides {org.clojure/clojure nil}
+                             :extra-deps {com.github.flow-storm/clojure {:mvn/version "RELEASE"}
+                                          com.github.flow-storm/flow-storm-dbg {:mvn/version "RELEASE"}}
+                             :jvm-opts ["-Dflowstorm.startRecording=false"
+                                        "-Dclojure.storm.instrumentEnable=true"
+                                        #_"-Dclojure.storm.instrumentAutoPrefixes=true"
+                                        "-Dclojure.storm.instrumentOnlyPrefixes=LPM."]}}}
