@@ -42,11 +42,11 @@
   (println "in IO:" current-user)
   (let [keys (sup/load-keys)
         secret-key (:secret-key keys)
-        _ (println "Secret key (base64) in gen-encry-key:" secret-key) 
+        _ (println "Secret key (base64) in gen-encry-key:" secret-key)
         user-info [(get current-user "userProfileName")
                    (get current-user "userLoginPassword")]
         _ (println "user-info):" user-info)
-        passwords (auth/hash-password (get current-user "userLoginPassword"))
+        passwords (get current-user "passwords")
         _ (println "passwords:" passwords)
         data (for [password passwords]
                [(get password "pName")
