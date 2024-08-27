@@ -108,9 +108,10 @@
 
 (defn save-keys [request]
   (println "trying to save keys")
-  (let [body (:body request)
-        secret-key (get body "secret-key")
-        public-key (get body "public-key")
+  (let [body (:body request) ; Convert response body from JSON
+        arr (get body "arr")  ; Extract the array from the body
+        secret-key (get arr 1)  ; First element is secret-key
+        public-key (get arr 3)  ; Second element is public-key
         keys-to-save {:secret-key secret-key
                       :public-key public-key}
         saved-keys (sup/save-keys keys-to-save)]
