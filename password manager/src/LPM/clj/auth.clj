@@ -19,11 +19,6 @@
     (catch Exception _
       false)))
 
-#_(defn register-new-user [username password secret-key]
-  (let [hashed-password (hash-password password)
-        encrypted-password (sns/encrypt-entry hashed-password secret-key)]
-    (save-user-to-db username encrypted-password)))
-
 (defn authenticate [entered-password hashed-password]
   (try
     {:authenticated (hashers/check entered-password hashed-password)}

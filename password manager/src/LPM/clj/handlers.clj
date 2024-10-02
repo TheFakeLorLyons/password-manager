@@ -19,9 +19,7 @@
         profile-name (get body "userProfileName")
         login-password (get body "userLoginPassword")
         user-profile (usr/create-account profile-name login-password)]
-    (println "Received request body:" request)
-    (println "Generated user-profile:" (:userProfileName user-profile) (:userLoginPassword user-profile))
-    (if (and profile-name login-password)  ; Example condition: check if profile-name and login-password are non-nil
+    (if (and profile-name login-password)
       {:status 200
        :headers {"Content-Type" "application/json"}
        :body user-profile}
@@ -64,13 +62,9 @@
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "Exporting user profile failed"})})))
 
-(defn export-encrypted-csv [request]
-  (println "exportin encrypted:" request)
-  (let [body (:body request)
-        _ (println "body " body)
+(defn export-encrypted-csv [request] 
+  (let [body (:body request) 
         csv-content (io/generate-encrypted-csv body)]
-    (println "user profile" body)
-    (println "csv content in handles" csv-content)
     (if csv-content
       {:status 200
        :headers {"Content-Type" "text/csv"
@@ -81,11 +75,8 @@
        :body (cjson/write-str {:message "Exporting encrypted profile failed"})})))
 
 (defn import-encrypted [request]
-  (println "importing-encrypted-csv")
-  (let [csv-data (:body request)
-        _ (println "body " csv-data)
-        decrypted-data (io/read-encrypted-csv csv-data)
-        _ (println "decrypted-data: " decrypted-data)]
+  (let [csv-data (:body request) 
+        decrypted-data (io/read-encrypted-csv csv-data)]
     (if decrypted-data
       {:status 200
        :headers {"Content-Type" "application/json"}
@@ -107,7 +98,6 @@
        :body (cjson/write-str {:message "Failed to generate keys... "})})))
 
 (defn save-keys [request]
-  (println "trying to save keys")
   (let [body (:body request) ; Convert response body from JSON
         arr (get body "arr")  ; Extract the array from the body
         secret-key (get arr 1)  ; First element is secret-key
@@ -115,11 +105,6 @@
         keys-to-save {:secret-key secret-key
                       :public-key public-key}
         saved-keys (sup/save-keys keys-to-save)]
-    (println "body" body)
-    (println "secret-key" secret-key)
-    (println "public-key" public-key)
-    (println "saved keys in handlers" keys-to-save)
-    (println "saved keys in handlers" saved-keys)
     (if saved-keys
       {:status 200
        :headers {"Content-Type" "application/json"}
@@ -129,10 +114,8 @@
        :body (cjson/write-str {:message "Failed to save keys... "})})))
 
 (defn check-setup-status [request]
-  (println "checking setup status...")
   (if (.exists (jio/file sup/key-file))
-    (let [file-content (slurp sup/key-file)
-          _ (println "File content:" file-content)]
+    (let [file-content (slurp sup/key-file)]
       (if file-content
         {:status 200
          :headers {"Content-Type" "application/json"}

@@ -39,23 +39,16 @@
       (csv/write-csv *out* csv-data))))
 
 (defn generate-encrypted-csv [current-user]
-  (println "in IO:" current-user)
   (let [keys (sup/load-keys)
         secret-key (:secret-key keys)
-        _ (println "Secret key (base64) in gen-encry-key:" secret-key)
         user-info [(get current-user "userProfileName")
                    (get current-user "userLoginPassword")]
-        _ (println "user-info):" user-info)
         passwords (get current-user "passwords")
-        _ (println "passwords:" passwords)
         data (for [password passwords]
                [(get password "pName")
                 (sns/encrypt (get password "pContent") secret-key)
                 (sns/encrypt (get password "pNotes") secret-key)])
-        _ (println "Secret key (base64):" data)
         csv-data (cons user-info data)] 
-    _ (println "csv-data:" csv-data)
-    (println "Secret key (base64) in gen-encry-key:" secret-key)
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
@@ -67,16 +60,10 @@
                   entries))))
 
 (defn read-encrypted-csv [csv-data]
-  (println "csv data " csv-data)
   (let [csv-content (get csv-data "csv-content")
-        _ (println "csv data " csv-content)
-        keys (sup/load-keys)
-        _ (println "keys1 csv data " keys)
-        secret-key (:secret-key keys)
-        _ (println "secret-key " secret-key)
-        [user-info & passwords] (str/split csv-content #"\n")
-        _ (println "user CONTENT IO " user-info)
-        _ (println "Enteredpw" (get csv-data "userLoginPassword"))
+        keys (sup/load-keys) 
+        secret-key (:secret-key keys) 
+        [user-info & passwords] (str/split csv-content #"\n") 
         [username existing-hashed-password] (str/split user-info #",")
         auth-result (auth/authenticate (get csv-data "userLoginPassword") existing-hashed-password)]
     (if (:authenticated auth-result)

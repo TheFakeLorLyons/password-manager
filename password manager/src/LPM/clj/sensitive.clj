@@ -51,51 +51,34 @@
         (= (count key-bytes) 24)  ; 192 bits
         (= (count key-bytes) 32)))) ; 256 bits
 
-(defn encrypt [data secret-key]
-  (println "Inside sense" data)
-  (println "Well? " (is-valid-aes-key? (bytes->base64 secret-key)))
-  (println "Secret key (base64):" (bytes->base64 secret-key))
+(defn encrypt [data secret-key] 
   (let [cipher (Cipher/getInstance "AES/GCM/NoPadding" "BC")
        iv (generate-random-iv iv-size)
        gcm-spec (GCMParameterSpec. tag-size iv)
        key-spec (SecretKeySpec. secret-key "AES")]
-
-   (println "IV generated (hex):" (bytes->hex iv))
-
    (try
      (.init cipher Cipher/ENCRYPT_MODE key-spec gcm-spec)
      (let [data-bytes (.getBytes data "UTF-8")
            encrypted (.doFinal cipher data-bytes)
-           result (byte-array (concat iv encrypted))]
-       (println "Encrypted content (base64):" (bytes->base64 result))
-       (bytes->base64 result)) ; Convert to base64 for storage
+           result (byte-array (concat iv encrypted))] 
+       (bytes->base64 result))
      (catch Exception e
        (println "Encryption error:" (.getMessage e))
        nil))))
 
 (defn decrypt-entry [encrypted-data secret-key]
-  (println "Inside sense" encrypted-data "AND SECRET KEY: " secret-key)
-  (println "Well!? " (is-valid-aes-key? (bytes->base64 secret-key)))
-  (println "Read Enc key (base64):" (bytes->base64 secret-key))
   (let [cipher (Cipher/getInstance "AES/GCM/NoPadding" "BC")
        all-bytes (base64->bytes encrypted-data)
        iv (byte-array iv-size)
        encrypted (byte-array (- (count all-bytes) iv-size))]
-
    (System/arraycopy all-bytes 0 iv 0 iv-size)
    (System/arraycopy all-bytes iv-size encrypted 0 (count encrypted))
-
-   (println "IV (hex):" (bytes->hex iv))
-   (println "Encrypted data (hex):" (bytes->hex encrypted))
-
    (let [gcm-spec (GCMParameterSpec. tag-size iv)
          key-spec (SecretKeySpec. secret-key "AES")]
      (try
        (.init cipher Cipher/DECRYPT_MODE key-spec gcm-spec)
-       (let [decrypted-bytes (.doFinal cipher encrypted)]
-         (println "Decrypted bytes (hex):" (bytes->hex decrypted-bytes))
+       (let [decrypted-bytes (.doFinal cipher encrypted)] 
          (String. decrypted-bytes "UTF-8"))
        (catch Exception e
-         (println "Decryption error:" (.getMessage e))
          (.printStackTrace e)
          nil)))))
