@@ -18,7 +18,7 @@ This is a password manager that works by encrypting and decrypting csvs locally.
 
 6. clj -m LPM.clj.routes in the terminal will begin the server
 
-7. npx shadow-cljs watch app start will begin shadow-cljs and load the app in the browser at localhost:8080
+7. npm start or npx shadow-cljs watch app will begin shadow-cljs and load the app in the browser at localhost:8080
 
 8. (One time only) Upon loading the application for the first time, it will prompt you to provide locally stored, 64 bit private keys that can be randomly generated for you, or manually entered. These are considered "symmetrical" shared keys, in that they are utilized in both encryption and decryption.
 

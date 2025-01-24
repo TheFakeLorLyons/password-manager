@@ -1,6 +1,4 @@
 (ns LPM.clj.sensitive
-  (:require [buddy.hashers :as hashers]
-            [clojure.string :as str])
   (:import [org.bouncycastle.jce.provider BouncyCastleProvider]
            [javax.crypto Cipher]
            [javax.crypto.spec SecretKeySpec GCMParameterSpec]

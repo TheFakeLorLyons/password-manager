@@ -1,7 +1,6 @@
 (ns LPM.cljs.helpers
   (:require [ajax.core :as ajax]
-            [reagent.core :as r]
-            [clojure.string :as str]))
+            [reagent.core :as r]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;              csv functions          ;
@@ -35,13 +34,15 @@
                         :error nil
                         :history [:choose]}))
 
+(def page-state (r/atom {:setup-complete false
+                         :logged-in false
+                         :show-add-form false
+                         :editing-password false}))
+
 (def setup-complete (r/atom false))
-
 (def logged-in (r/atom false))
-
-(def show-add-form (r/atom false));true to speed up to generation
-
-(def editing-password (r/atom false))
+(def show-add-form (r/atom false))    ;true to speed up to generation
+(def editing-password (r/atom false)) ;true displays the editing view
 
 (defn logout []
   (reset! user-state {:userProfileName nil
