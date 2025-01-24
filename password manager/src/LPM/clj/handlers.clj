@@ -46,24 +46,18 @@
 
 (defn save-current-session [request]
   (let [body (:body request)
-        profile-name (get body "userProfileName")
-        login-password (get body "userLoginPassword")
-        passwords (get body "passwords")
-        user-profile {:users {"profile" {:userProfileName profile-name
-                                         :userLoginPassword login-password
-                                         :passwords passwords}}}
-        csv-content (io/generate-csv user-profile)]
-    (if csv-content
-      {:status 200
-       :headers {"Content-Type" "text/csv"
-                 "Content-Disposition" "attachment; filename=\"passwords.csv\""}
-       :body csv-content}
-      {:status 401
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str {:message "Exporting user profile failed"})})))
+        csv-content (io/generate-csv body)] 
+      (if csv-content
+        {:status 200
+         :headers {"Content-Type" "text/csv"
+                   "Content-Disposition" "attachment; filename=\"passwords.csv\""}
+         :body csv-content}
+        {:status 401
+         :headers {"Content-Type" "application/json"}
+         :body (cjson/write-str {:message "Exporting user profile failed"})})))
 
-(defn export-encrypted-csv [request] 
-  (let [body (:body request) 
+(defn export-encrypted-csv [request]
+  (let [body (:body request)
         csv-content (io/generate-encrypted-csv body)]
     (if csv-content
       {:status 200
@@ -75,7 +69,7 @@
        :body (cjson/write-str {:message "Exporting encrypted profile failed"})})))
 
 (defn import-encrypted [request]
-  (let [csv-data (:body request) 
+  (let [csv-data (:body request)
         decrypted-data (io/read-encrypted-csv csv-data)]
     (if decrypted-data
       {:status 200

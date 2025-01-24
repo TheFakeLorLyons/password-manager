@@ -1,5 +1,0 @@
-/.cpache/
-/.out/
-/node_modules/
-/.lsp/
-/.clj-kondo/

@@ -12,8 +12,8 @@
          (= 64 (count key))
          (re-matches #"[0-9a-fA-F]+" key))
     (catch js/Error e
-    (js/console.log "Caught exception:" (.-message e))
-    false)))
+      (js/console.log "Caught exception:" (.-message e))
+      false)))
 
 (defn back-button []
   (let [click-handler
@@ -86,9 +86,11 @@
        [:div.setup-container
         [:h2.setup-heading "Key Setup"]
         [:p "Choose how you want to set up your keys:"]
-        [:button {:on-click #(swap! help/key-state assoc :mode :generate
+        [:button {:style {:margin-right "5px"}
+                  :on-click #(swap! help/key-state assoc :mode :generate
                                     :history (conj (:history @help/key-state) :choose))} "Generate Random Keys"]
-        [:button {:on-click #(swap! help/key-state assoc :mode :manual
+        [:button {:style {:margin-left "5px"}
+                  :on-click #(swap! help/key-state assoc :mode :manual
                                     :history (conj (:history @help/key-state) :choose))} "Enter My Own Keys"]]
 
        :generate

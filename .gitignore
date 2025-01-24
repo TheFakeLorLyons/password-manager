@@ -1,0 +1,10 @@
+/.clj-kondo/
+.cpcache
+js/
+/.lsp/
+.nrepl-port/
+node_modules
+/package-lock.json
+.shadow-cljs/
+/.out/
+keys.edn

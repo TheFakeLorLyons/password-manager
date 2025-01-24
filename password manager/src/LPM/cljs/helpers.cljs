@@ -41,7 +41,7 @@
 
 (def show-add-form (r/atom false));true to speed up to generation
 
-(def editing-password (r/atom nil))
+(def editing-password (r/atom false))
 
 (defn logout []
   (reset! user-state {:userProfileName nil

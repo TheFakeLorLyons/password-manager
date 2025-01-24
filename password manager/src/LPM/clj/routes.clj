@@ -7,20 +7,20 @@
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.cors :refer [wrap-cors]]
             [buddy.auth.middleware :refer [wrap-authentication]]
-            [LPM.clj.handlers :as hnd]
+            [LPM.clj.handlers :as h]
             [LPM.clj.auth :as auth]))
 
 (defroutes app-routes
-  (POST "/create-account" [] hnd/create-account)
-  (POST "/request-existing-csv" [] hnd/request-existing-csv)
-  (POST "/save-current-session" [] hnd/save-current-session)
-  (POST "/generate-keys" [] hnd/generate-keys-handler)
-  (POST "/import-encrypted-csv" [] hnd/import-encrypted)
-  (POST "/export-encrypted-csv" [] hnd/export-encrypted-csv)
-  (POST "/save-keys" [] hnd/save-keys)
+  (POST "/create-account" [] h/create-account)
+  (POST "/request-existing-csv" [] h/request-existing-csv)
+  (POST "/save-current-session" [] h/save-current-session)
+  (POST "/generate-keys" [] h/generate-keys-handler)
+  (POST "/import-encrypted-csv" [] h/import-encrypted)
+  (POST "/export-encrypted-csv" [] h/export-encrypted-csv)
+  (POST "/save-keys" [] h/save-keys)
 
-  (GET "/generate-a-password" [] hnd/generate-a-password)
-  (GET "/check-setup-status" [] hnd/check-setup-status))
+  (GET "/generate-a-password" [] h/generate-a-password)
+  (GET "/check-setup-status" [] h/check-setup-status))
 
 (def handler
   (-> app-routes
@@ -36,20 +36,18 @@
   (run-jetty handler {:port 3000 :join? false}))
 
 (comment (-main)
-         
+         (defonce server (atom nil))
 
-(defonce server (atom nil)) 
-         
          (defn start-server []
            (when @server
              (.stop @server))  ; Stop the existing server if it's running
            (reset! server (run-jetty #'handler {:port 3000 :join? false})))
-         
+
          (defn stop-server []
            (when @server
              (.stop @server)
              (reset! server nil)))  ; Clear the server reference after stopping
-         
+
          (defn restart-server []
            (stop-server)
            (start-server)))

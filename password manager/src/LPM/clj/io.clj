@@ -27,9 +27,9 @@
       nil)))
 
 (defn generate-csv [current-user]
-  (let [profile (get-in current-user [:users "profile"])
-        user-info [(get profile :userProfileName) (get profile :userLoginPassword)]
-        passwords (get profile :passwords)
+  (let [user-info [(get current-user "userProfileName")
+                   (get current-user "userLoginPassword")]
+        passwords (get current-user "passwords")
         data (for [password passwords]
                [(get password "pName")
                 (get password "pContent")
@@ -38,7 +38,7 @@
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
-(defn generate-encrypted-csv [current-user]
+(defn generate-encrypted-csv [current-user] 
   (let [keys (sup/load-keys)
         secret-key (:secret-key keys)
         user-info [(get current-user "userProfileName")
@@ -48,7 +48,7 @@
                [(get password "pName")
                 (sns/encrypt (get password "pContent") secret-key)
                 (sns/encrypt (get password "pNotes") secret-key)])
-        csv-data (cons user-info data)] 
+        csv-data (cons user-info data)]
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
@@ -61,9 +61,9 @@
 
 (defn read-encrypted-csv [csv-data]
   (let [csv-content (get csv-data "csv-content")
-        keys (sup/load-keys) 
-        secret-key (:secret-key keys) 
-        [user-info & passwords] (str/split csv-content #"\n") 
+        keys (sup/load-keys)
+        secret-key (:secret-key keys)
+        [user-info & passwords] (str/split csv-content #"\n")
         [username existing-hashed-password] (str/split user-info #",")
         auth-result (auth/authenticate (get csv-data "userLoginPassword") existing-hashed-password)]
     (if (:authenticated auth-result)
