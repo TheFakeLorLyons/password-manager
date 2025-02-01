@@ -10,6 +10,7 @@
             [LPM.clj.handlers :as h]
             [LPM.clj.auth :as auth]))
 
+;coersions with compojure (turn size to int so I don't have to parse)
 (defroutes app-routes
   (POST "/create-account" [] h/create-account)
   (POST "/request-existing-csv" [] h/request-existing-csv)
@@ -19,7 +20,7 @@
   (POST "/export-encrypted-csv" [] h/export-encrypted-csv)
   (POST "/save-keys" [] h/save-keys)
 
-  (GET "/generate-a-password" [] h/generate-a-password)
+  (GET "/generate-a-password" [size] (h/generate-a-password (parse-long size)))
   (GET "/check-setup-status" [] h/check-setup-status))
 
 (def handler
@@ -29,7 +30,7 @@
                  :access-control-allow-methods [:get :post :delete :options])
       (wrap-session {:store (cookie-store)})
       (wrap-json-body)
-      (wrap-json-response)
+      #_(wrap-json-response)
       (wrap-authentication auth/auth-backend)))
 
 (defn -main [& args]
@@ -40,13 +41,13 @@
 
          (defn start-server []
            (when @server
-             (.stop @server))  ; Stop the existing server if it's running
+             (.stop @server))  ;Stop the existing server if it's running
            (reset! server (run-jetty #'handler {:port 3000 :join? false})))
 
          (defn stop-server []
            (when @server
              (.stop @server)
-             (reset! server nil)))  ; Clear the server reference after stopping
+             (reset! server nil)))  ;Clear the server reference after stopping
 
          (defn restart-server []
            (stop-server)

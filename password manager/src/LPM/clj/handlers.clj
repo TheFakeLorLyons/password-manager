@@ -1,11 +1,20 @@
 (ns LPM.clj.handlers
-  (:require [clojure.data.json :as cjson] 
+  (:require [clojure.data.json :as cjson]
             [LPM.clj.auth :as auth]
             [LPM.clj.pwfuncs :as pwf]
             [LPM.clj.io :as io]
             [LPM.clj.setup :as sup]
-            [LPM.clj.user :as usr] 
-            [clojure.java.io :as jio]))
+            [LPM.clj.user :as usr]
+            [clojure.java.io :as jio]
+            [cognitect.transit :as transit]
+            [ring.util.response :as response])
+  (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
+
+(defn to-transit [data]
+  (let [out (ByteArrayOutputStream. 4096)
+        writer (transit/writer out :json-verbose)]
+    (transit/write writer data)
+    (ByteArrayOutputStream/.toString out)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 IO                  ;
@@ -70,8 +79,8 @@
         decrypted-data (io/read-encrypted-csv csv-data)]
     (if decrypted-data
       {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str decrypted-data)}
+       :headers {"Content-Type" "application/json"};content type for transit
+       :body (cjson/write-str decrypted-data)};transit write-transit
       {:status 401
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "Importing encrypted profile failed"})})))
@@ -122,15 +131,17 @@
                                         ;            PW Generation            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn generate-a-password [request]
-  (let [size (try
-               (Integer/parseInt (get-in request [:params "size"]))
-               (catch Exception e
-                 nil))]
-    (if (and size (pos? size))
-      (let [password (pwf/generate-password size)]
-        {:status 200
-         :body {:password password
-                :message "Password generated successfully password"}})
-      {:status 400
-       :body {:error "Invalid size parameter. Must be a positive integer."}})))
+(defn generate-a-password [size]
+  (if (and size (pos? size))
+    (let [password (pwf/generate-password size)]
+      (-> (to-transit {:password password
+                       :message "Password generated successfully password"})
+          (response/response)
+          (response/content-type "application/transit+json")))
+    (-> (to-transit {:error "Invalid size parameter. Must be a positive integer."})
+        (response/bad-request)
+        (response/content-type "application/transit+json"))))
+
+(comment 
+  (to-transit {:password "testPassword"
+               :message "worked successfully"}))

@@ -57,8 +57,7 @@
                                         ; Password Generation w/ spcec        ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn generate-password [length]
-  (println "pwfunc req:" length)
+(defn generate-password [length] 
   (let [chars "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?/"]
     (apply str
            (repeatedly length

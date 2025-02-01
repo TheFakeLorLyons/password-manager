@@ -108,9 +108,9 @@
     (js/Promise.
      (fn [resolve reject]
        (ajax/GET url
-         {:response-format (ajax/json-response-format {:keywords? true})
+         {:response-format (ajax/transit-response-format {:keywords? true})
           :handler (fn [response]
-                     (resolve (get response :password)))
+                     (resolve (:password response)))
           :error-handler (fn [error]
                            (reject error))})))))
 
