@@ -1,5 +1,5 @@
 (ns LPM.clj.routes
-  (:require [compojure.core :refer [defroutes POST GET]]
+  (:require [compojure.core :refer [defroutes POST GET routes]]
             [ring.adapter.jetty :refer [run-jetty]]
             [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
             [ring.middleware.session :refer [wrap-session]]
@@ -13,6 +13,10 @@
 ;coersions with compojure (turn size to int so I don't have to parse)
 (defroutes app-routes
   (POST "/create-account" [] h/create-account)
+
+  (GET "/generate-a-password" [size] (h/generate-a-password (parse-long size))))
+
+(defroutes json-endpoints
   (POST "/request-existing-csv" [] h/request-existing-csv)
   (POST "/save-current-session" [] h/save-current-session)
   (POST "/generate-keys" [] h/generate-keys-handler)
@@ -20,16 +24,20 @@
   (POST "/export-encrypted-csv" [] h/export-encrypted-csv)
   (POST "/save-keys" [] h/save-keys)
 
-  (GET "/generate-a-password" [size] (h/generate-a-password (parse-long size)))
   (GET "/check-setup-status" [] h/check-setup-status))
 
+(def json-wrapped-endpoints
+  (-> json-endpoints
+      (wrap-json-body)
+      (wrap-json-response)))
+
 (def handler
-  (-> app-routes
+  (-> (routes app-routes json-wrapped-endpoints)
       (wrap-params)
       (wrap-cors :access-control-allow-origin  #".*"
                  :access-control-allow-methods [:get :post :delete :options])
       (wrap-session {:store (cookie-store)})
-      (wrap-json-body)
+      #_(wrap-json-body)
       #_(wrap-json-response)
       (wrap-authentication auth/auth-backend)))
 

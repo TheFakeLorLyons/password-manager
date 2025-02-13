@@ -14,24 +14,20 @@
   (let [out (ByteArrayOutputStream. 4096)
         writer (transit/writer out :json-verbose)]
     (transit/write writer data)
-    (ByteArrayOutputStream/.toString out)))
+    (.toString out)))
 
+(defn from-transit [transit-data]
+  (let [in (ByteArrayInputStream. (.getBytes (slurp transit-data)))
+        reader (transit/reader in :json-verbose)]
+    (transit/read reader)))
+
+#_(def in (ByteArrayInputStream. (.toByteArray out)))
+#_(def reader (transit/reader in :json))
+#_(prn (transit/read reader))  ;; => "foo"
+#_(prn (transit/read reader)) 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 IO                  ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn create-account [request]
-  (let [body (:body request)
-        profile-name (get body "userProfileName")
-        login-password (get body "userLoginPassword")
-        user-profile (usr/create-account profile-name login-password)]
-    (if (and profile-name login-password)
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body user-profile}
-      {:status 401
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str {:message "Login failed. Profile name or password mismatch."})})))
 
 (defn request-existing-csv [request]
   (let [body (:body request)
@@ -117,6 +113,7 @@
   (if (.exists (jio/file sup/key-file))
     (let [file-content (slurp sup/key-file)]
       (if file-content
+        #_(response/response file-content)
         {:status 200
          :headers {"Content-Type" "application/json"}
          :body (cjson/write-str file-content)}
@@ -142,6 +139,16 @@
         (response/bad-request)
         (response/content-type "application/transit+json"))))
 
-(comment 
-  (to-transit {:password "testPassword"
-               :message "worked successfully"}))
+(defn create-account [request]
+  (let [data (from-transit (:body request))
+        {:keys [userProfileName userLoginPassword]} data]
+    (if (and userProfileName userLoginPassword)
+      (let [user-profile (usr/create-account userProfileName userLoginPassword)]
+        (-> (to-transit {:user-profile user-profile
+                         :message "Account generated successfully password"})
+            (response/response)
+            (response/content-type "application/transit+json")))
+      (-> (to-transit {:error "Login failed. Profile name or password mismatch."})
+          (response/bad-request)
+          (response/content-type "application/transit+json")))))
+

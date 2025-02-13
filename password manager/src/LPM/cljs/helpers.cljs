@@ -212,19 +212,15 @@
   (ajax/POST "http://localhost:3000/create-account"
     {:params {:userProfileName @profile-name
               :userLoginPassword @login-password}
-     :format :json
-     :response-format :json
-     :handler (fn [response]
-                (js/console.log "Full response:" (pr-str response))
-                (let [body (or (:body response) response)
-                      _ (js/console.log "Body:" (pr-str body))]
-                  (if (and (map? body) (contains? body "userProfileName"))
-                    (do
-                      (swap! user-state merge {:userProfileName (get body "userProfileName")
-                                               :userLoginPassword (get body "userLoginPassword")
-                                               :passwords (get body "passwords")})
-                      (js/console.log "Updated user-state:" (pr-str @user-state)))
-                    (js/console.error "Unexpected response format:" (pr-str body)))))
+     :response-format (ajax/transit-response-format {:keywords? true})
+     :handler (fn [response] 
+                (let [user-profile (:user-profile response)]
+                  (if user-profile
+                    (swap! user-state merge
+                           {:userProfileName (:userProfileName user-profile)
+                            :userLoginPassword (:userLoginPassword user-profile)
+                            :passwords (:passwords user-profile)})
+                    (js/console.error "Unexpected response format:" response))))
      :error-handler (fn [error]
                       (js/console.error "Failed to create account:" error))}))
 
