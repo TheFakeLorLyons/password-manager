@@ -48,7 +48,7 @@
       user-data)))
 
 (defn import-csv [request]
-  (let [data (from-transit (:body request))
+  (let [data (from-transit (:body request)) 
         user-data (extract-user-data data)]
     (if user-data
       (-> (to-transit {:user-data user-data
@@ -61,15 +61,15 @@
 
 (defn save-current-session [request]
   (let [body (:body request)
-        csv-content (io/generate-csv body)]
-    (if csv-content
-      {:status 200
-       :headers {"Content-Type" "text/csv"
-                 "Content-Disposition" "attachment; filename=\"passwords.csv\""}
-       :body csv-content}
-      {:status 401
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str {:message "Exporting user profile failed"})})))
+        csv-content (io/generate-csv body)] 
+      (if csv-content
+        {:status 200 
+         :headers {"Content-Type" "text/csv"
+                   "Content-Disposition" "attachment; filename=\"passwords.csv\""}
+         :body csv-content}
+        {:status 401
+         :headers {"Content-Type" "application/json"}
+         :body (cjson/write-str {:message "Exporting user profile failed"})})))
 
 (defn export-encrypted-csv [request]
   (let [body (:body request)
@@ -88,23 +88,21 @@
         decrypted-data (io/read-encrypted-csv csv-data)]
     (if decrypted-data
       {:status 200
-       :headers {"Content-Type" "application/json"};content type for transit
-       :body (cjson/write-str decrypted-data)};transit write-transit
+       :headers {"Content-Type" "application/json"}
+       :body (cjson/write-str decrypted-data)}
       {:status 401
        :headers {"Content-Type" "application/json"}
        :body (cjson/write-str {:message "Importing encrypted profile failed"})})))
 
-(defn generate-keys-handler [request]
+(defn generate-keys [request]
   (try
-    (let [keys (sup/generate-keys)]
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str keys)})
+    (-> (to-transit (sup/generate-keys))
+        (response/response)
+        (response/content-type "application/transit+json"))
     (catch Exception event
-      (println "Exception during key generation:" (.getMessage event))
-      {:status 500
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str {:message "Failed to generate keys... "})})))
+      (-> (to-transit {:error (str "Exception during key generation: " event)})
+          (response/bad-request)
+          (response/content-type "application/transit+json")))))
 
 (defn save-keys [request]
   (let [body (:body request)    ; Convert response body from JSON
@@ -123,19 +121,14 @@
        :body (cjson/write-str {:message "Failed to save keys... "})})))
 
 (defn check-setup-status [request]
-  (if (.exists (jio/file sup/key-file))
-    (let [file-content (slurp sup/key-file)]
-      (if file-content
-        (-> (to-transit {:file-content file-content
-                         :message "Succefully read key file."})
-            (response/response)
-            (response/content-type "application/transit+json"))
-        (-> (to-transit {:error "Invalid key file, please delete the file and try again."})
-            (response/bad-request)
-            (response/content-type "application/transit+json"))))
-    (-> (to-transit {:error "No key file located."})
-        (response/bad-request)
-        (response/content-type "application/transit+json"))))
+  (try
+    (-> (to-transit (slurp sup/key-file))
+        (response/response)
+        (response/content-type "application/transit+json"))
+    (catch Exception event
+      (-> (to-transit {:error (str "Error, No key file located: " event)})
+          (response/bad-request)
+          (response/content-type "application/transit+json")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;            PW Generation            ;

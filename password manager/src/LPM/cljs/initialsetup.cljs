@@ -56,8 +56,7 @@
           [:div
            [back-button]
            (if @keys
-             [:div
-              (js/console.log secret " and " public "gendiv" @keys)
+             [:div 
               [:h2 "Generated Keys"]
               [:div {:style {:display "flex"}}
                [:p "Secret Key: " secret]

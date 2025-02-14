@@ -58,7 +58,6 @@
   (ajax/GET "http://localhost:3000/check-setup-status"
     {:response-format (ajax/transit-response-format {:keywords? true})
      :handler (fn [response]
-                (js/console.log "Checking setup status: " response)
                 (reset! setup-complete (:setup-complete response))
                 (callback response))
      :error-handler (fn [error]
@@ -83,19 +82,16 @@
   (js/Promise.
    (fn [resolve reject]
      (ajax/POST "http://localhost:3000/generate-keys"
-       {:headers {"Content-Type" "application/json"}
-        :response-format :json
-        :keywords? true
+       {:response-format (ajax/transit-response-format {:keywords? true}) 
         :handler  (fn [response]
-                    (js/console.log "Checking setup status: " response)
-                    (if (and (:secret-key response) (:public-key response))
+                    (let [{:keys [secret-key public-key]} response]
+                    (if (and secret-key public-key)
                       (do
                         (swap! key-state assoc
-                               :secret-key (:secret-key keys)
-                               :public-key (:public-key keys))
-                        (js/console.log "Keys set in key-state" keys)
+                               :secret-key secret-key
+                               :public-key public-key) 
                         (resolve response))
-                      (js/console.error "No keys in response")))
+                      (js/console.error "No keys in response"))))
         :error-handler (fn [error]
                          (js/console.error "Fetch error:" error)
                          (reject error))}))))

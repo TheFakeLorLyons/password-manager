@@ -65,7 +65,7 @@
                      (when (some? @selected-file)
                        (help/handle-file-selection @selected-file))
                      (help/handle-login-encrypted e profile-name login-password login error-message))}
-        [rainbow-login]]       
+        [rainbow-login]]      
        [:input {:type "submit"
                 :value "Login (unencrypted)"
                 :on-click (fn [e]

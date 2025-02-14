@@ -28,14 +28,12 @@
   (.encodeToString (Base64/getEncoder) bytes))
 
 (defn save-keys [keys]
-  (println "saving keys in setup.clj")
   (let [current-time (java.time.Instant/now)
         keys-with-metadata {:setup-complete true
                             :completed-at current-time
                             :public-key (:public-key keys)
                             :secret-key (:secret-key keys)}]
     (spit key-file (cjson/write-str keys-with-metadata))
-    (println "saved?" keys-with-metadata)
     keys-with-metadata))
 
 (defn load-keys []
