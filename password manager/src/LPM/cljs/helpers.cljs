@@ -56,11 +56,9 @@
 
 (defn check-setup [callback]
   (ajax/GET "http://localhost:3000/check-setup-status"
-    {:response-format :json
-     :keywords? true
+    {:response-format (ajax/transit-response-format {:keywords? true})
      :handler (fn [response]
-                (js/console.log "Checking setup status: response")
-                (println "Success:" response)
+                (js/console.log "Checking setup status: " response)
                 (reset! setup-complete (:setup-complete response))
                 (callback response))
      :error-handler (fn [error]
@@ -159,28 +157,24 @@
        :error-handler (fn [error]
                         (js/console.error "Failed to export csv:" error))})))
 
-(defn request-existing-csv [profile-name login-password]
-  (ajax/POST "http://localhost:3000/request-existing-csv"
+(defn import-csv [profile-name login-password]
+  #_(js/console.log "importing csv:" @csv-content profile-name)
+  (ajax/POST "http://localhost:3000/import-csv"
     {:params {:csv-content @csv-content
               :userProfileName profile-name
-              :userLoginPassword login-password}
-     :headers {"Content-Type" "application/json"}
-     :format :json
-     :response-format :json
+              :userLoginPassword login-password} 
+     :response-format (ajax/transit-response-format {:keywords? true})
      :handler (fn [response]
-                (let [profile-name (get response "userProfileName")
-                      login-password (get response "userLoginPassword")
-                      processed-passwords
-                      (doall
-                       (mapv
-                        (fn [pw]
-                          (let [pName (get pw "pName")
-                                pContent (get pw "pContent")
-                                pNotes (get pw "pNotes")]
-                            {:pName pName
-                             :pContent pContent
-                             :pNotes pNotes}))
-                        (get response "passwords")))]
+                #_(js/console.error "csv response:" response)
+                (let [profile-name (:userProfileName (:user-data response))
+                      login-password (:userLoginPassword (:user-data response))
+                      processed-passwords (doall
+                                           (mapv (fn [pw]
+                                                   (let [pName (:pName pw)
+                                                         pContent (:pContent pw)
+                                                         pNotes (:pNotes pw)]
+                                                     {:pName pName :pContent pContent :pNotes pNotes}))
+                                                 (:passwords (:user-data response))))]
                   (reset! user-state {:userProfileName profile-name
                                       :userLoginPassword login-password
                                       :passwords processed-passwords})))
@@ -208,7 +202,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn create-account [profile-name login-password]
-  (js/console.log "Attempting to create account for:" profile-name)
   (ajax/POST "http://localhost:3000/create-account"
     {:params {:userProfileName @profile-name
               :userLoginPassword @login-password}
@@ -241,7 +234,7 @@
       (reset! logged-in true))
     (reset! error-message "All fields must be filled in")))
 
-(defn handle-login-submission
+(defn handle-login-unencrypted
   "This function either creates a blank slate user, or draws exising user
    information from CSV using the above 'request-existing-csv' fn."
   [event profile-name login-password login error-message]
@@ -257,7 +250,8 @@
         (do
           (js/setTimeout  ;Ensure csv-content is set before making request
            (fn []
-             (request-existing-csv @profile-name @login-password)) ;Make API request
+             (js/console.log "handling-login:" @csv-content profile-name)
+             (import-csv @profile-name @login-password)) ;Make API request
            100)
           (reset! logged-in true))
         (do

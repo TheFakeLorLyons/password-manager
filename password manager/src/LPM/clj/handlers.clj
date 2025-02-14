@@ -21,42 +21,55 @@
         reader (transit/reader in :json-verbose)]
     (transit/read reader)))
 
-#_(def in (ByteArrayInputStream. (.toByteArray out)))
-#_(def reader (transit/reader in :json))
-#_(prn (transit/read reader))  ;; => "foo"
-#_(prn (transit/read reader)) 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 IO                  ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn request-existing-csv [request]
-  (let [body (:body request)
-        keys (sup/generate-keys)
-        profile-name (get body "userProfileName")
-        login-password (get body "userLoginPassword")
-        user-data  (io/csv-to-current-user (get body "csv-content"))
-        pw-to-compare (:userLoginPassword user-data)]
-    (and user-data
-         (if (and (= profile-name (:userProfileName user-data))
-                  (auth/authenticate (auth/hash-password login-password) pw-to-compare))
-           {:status 200
-            :headers {"Content-Type" "application/json"}
-            :body (cjson/write-str user-data)}
-           {:status 401
-            :headers {"Content-Type" "application/json"}
-            :body (cjson/write-str {:message "Login failed. Profile name or password mismatch."})}))))
+(defn create-account [request]
+  (let [data (from-transit (:body request))
+        {:keys [userProfileName userLoginPassword]} data]
+    (if (and userProfileName userLoginPassword)
+      (let [user-profile (usr/create-account userProfileName userLoginPassword)]
+        (-> (to-transit {:user-profile user-profile
+                         :message "Account generated successfully password"})
+            (response/response)
+            (response/content-type "application/transit+json")))
+      (-> (to-transit {:error "Login failed. Profile name or password mismatch."})
+          (response/bad-request)
+          (response/content-type "application/transit+json")))))
+
+(defn extract-user-data [data]
+  (let [{:keys [csv-content userProfileName userLoginPassword]} data
+        user-data  (io/csv-to-current-user csv-content)
+        pw-to-compare (:userLoginPassword user-data)
+        username-to-compare (:userProfileName user-data)]
+    (when (and (= userProfileName username-to-compare)
+               (auth/authenticate (auth/hash-password userLoginPassword) pw-to-compare))
+      user-data)))
+
+(defn import-csv [request]
+  (let [data (from-transit (:body request))
+        user-data (extract-user-data data)]
+    (if user-data
+      (-> (to-transit {:user-data user-data
+                       :message "Successfully imported CSV"})
+          (response/response)
+          (response/content-type "application/transit+json"))
+      (-> (to-transit {:error "Importing the CSV failed, error: "})
+          (response/bad-request)
+          (response/content-type "application/transit+json")))))
 
 (defn save-current-session [request]
   (let [body (:body request)
-        csv-content (io/generate-csv body)] 
-      (if csv-content
-        {:status 200
-         :headers {"Content-Type" "text/csv"
-                   "Content-Disposition" "attachment; filename=\"passwords.csv\""}
-         :body csv-content}
-        {:status 401
-         :headers {"Content-Type" "application/json"}
-         :body (cjson/write-str {:message "Exporting user profile failed"})})))
+        csv-content (io/generate-csv body)]
+    (if csv-content
+      {:status 200
+       :headers {"Content-Type" "text/csv"
+                 "Content-Disposition" "attachment; filename=\"passwords.csv\""}
+       :body csv-content}
+      {:status 401
+       :headers {"Content-Type" "application/json"}
+       :body (cjson/write-str {:message "Exporting user profile failed"})})))
 
 (defn export-encrypted-csv [request]
   (let [body (:body request)
@@ -94,8 +107,8 @@
        :body (cjson/write-str {:message "Failed to generate keys... "})})))
 
 (defn save-keys [request]
-  (let [body (:body request) ; Convert response body from JSON
-        arr (get body "arr")  ; Extract the array from the body
+  (let [body (:body request)    ; Convert response body from JSON
+        arr (get body "arr")    ; Extract the array from the body
         secret-key (get arr 1)  ; First element is secret-key
         public-key (get arr 3)  ; Second element is public-key
         keys-to-save {:secret-key secret-key
@@ -113,16 +126,16 @@
   (if (.exists (jio/file sup/key-file))
     (let [file-content (slurp sup/key-file)]
       (if file-content
-        #_(response/response file-content)
-        {:status 200
-         :headers {"Content-Type" "application/json"}
-         :body (cjson/write-str file-content)}
-        {:status 401
-         :headers {"Content-Type" "application/json"}
-         :body (cjson/write-str {:message "Failed to read setup file... "})}))
-    {:status 500
-     :headers {"Content-Type" "application/json"}
-     :body (cjson/write-str {:message "Keys have not been generated yet"})}))
+        (-> (to-transit {:file-content file-content
+                         :message "Succefully read key file."})
+            (response/response)
+            (response/content-type "application/transit+json"))
+        (-> (to-transit {:error "Invalid key file, please delete the file and try again."})
+            (response/bad-request)
+            (response/content-type "application/transit+json"))))
+    (-> (to-transit {:error "No key file located."})
+        (response/bad-request)
+        (response/content-type "application/transit+json"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;            PW Generation            ;
@@ -138,17 +151,3 @@
     (-> (to-transit {:error "Invalid size parameter. Must be a positive integer."})
         (response/bad-request)
         (response/content-type "application/transit+json"))))
-
-(defn create-account [request]
-  (let [data (from-transit (:body request))
-        {:keys [userProfileName userLoginPassword]} data]
-    (if (and userProfileName userLoginPassword)
-      (let [user-profile (usr/create-account userProfileName userLoginPassword)]
-        (-> (to-transit {:user-profile user-profile
-                         :message "Account generated successfully password"})
-            (response/response)
-            (response/content-type "application/transit+json")))
-      (-> (to-transit {:error "Login failed. Profile name or password mismatch."})
-          (response/bad-request)
-          (response/content-type "application/transit+json")))))
-

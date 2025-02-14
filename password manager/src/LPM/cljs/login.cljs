@@ -73,10 +73,10 @@
                             (reset! login true)
                             (when (some? @selected-file)
                                (help/handle-file-selection @selected-file))
-                            (help/handle-login-submission e profile-name login-password login error-message))}]
+                            (help/handle-login-unencrypted e profile-name login-password login error-message))}]
        [:input {:type "button"
                 :id "caccount-button"
                 :value "New?"
                 :on-click (fn [e]
                             (.preventDefault e)
-                            (help/handle-login-submission e profile-name login-password nil error-message))}]])))
+                            (help/handle-login-unencrypted e profile-name login-password nil error-message))}]])))

@@ -13,18 +13,17 @@
 ;coersions with compojure (turn size to int so I don't have to parse)
 (defroutes app-routes
   (POST "/create-account" [] h/create-account)
+  (POST "/import-csv" [] h/import-csv)
 
+  (GET "/check-setup-status" [] h/check-setup-status)
   (GET "/generate-a-password" [size] (h/generate-a-password (parse-long size))))
 
-(defroutes json-endpoints
-  (POST "/request-existing-csv" [] h/request-existing-csv)
+(defroutes json-endpoints 
   (POST "/save-current-session" [] h/save-current-session)
   (POST "/generate-keys" [] h/generate-keys-handler)
   (POST "/import-encrypted-csv" [] h/import-encrypted)
   (POST "/export-encrypted-csv" [] h/export-encrypted-csv)
-  (POST "/save-keys" [] h/save-keys)
-
-  (GET "/check-setup-status" [] h/check-setup-status))
+  (POST "/save-keys" [] h/save-keys))
 
 (def json-wrapped-endpoints
   (-> json-endpoints
