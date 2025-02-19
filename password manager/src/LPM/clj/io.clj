@@ -23,22 +23,20 @@
                              :pNotes pNotes}))
                         password-lines)})
     (catch Exception e
-      (println "Error processing CSV:" (.getMessage e))
-      nil)))
+      (throw (ex-info (str "Error processing CSV:" (ex-message e))
+                      {:id ::csv-failed
+                       :csv-string csv-string}
+                      e)))))
 
 (defn generate-csv [current-user]
-  (let [user-info [(get current-user "userProfileName")
-                   (get current-user "userLoginPassword")]
-        passwords (get current-user "passwords")
-        data (for [password passwords]
-               [(get password "pName")
-                (get password "pContent")
-                (get password "pNotes")])
-        csv-data (cons user-info data)]
+  (let [{:keys [userProfileName userLoginPassword passwords]} current-user
+        password-list (for [{:keys [pName pContent pNotes]} passwords]
+               [pName pContent pNotes]) 
+        csv-data (cons [userProfileName userLoginPassword] password-list)]
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
-(defn generate-encrypted-csv [current-user] 
+(defn generate-encrypted-csv [current-user]
   (let [keys (sup/load-keys)
         secret-key (:secret-key keys)
         user-info [(get current-user "userProfileName")

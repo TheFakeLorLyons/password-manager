@@ -15,12 +15,12 @@
   (POST "/create-account" [] h/create-account)
   (POST "/generate-keys" [] h/generate-keys)
   (POST "/import-csv" [] h/import-csv)
+  (POST "/export-csv" [] h/export-csv)
 
   (GET "/check-setup-status" [] h/check-setup-status)
   (GET "/generate-a-password" [size] (h/generate-a-password (parse-long size))))
 
 (defroutes json-endpoints 
-  (POST "/save-current-session" [] h/save-current-session)
   (POST "/import-encrypted-csv" [] h/import-encrypted)
   (POST "/export-encrypted-csv" [] h/export-encrypted-csv)
   (POST "/save-keys" [] h/save-keys))

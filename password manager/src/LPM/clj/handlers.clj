@@ -47,29 +47,30 @@
                (auth/authenticate (auth/hash-password userLoginPassword) pw-to-compare))
       user-data)))
 
-(defn import-csv [request]
-  (let [data (from-transit (:body request)) 
-        user-data (extract-user-data data)]
-    (if user-data
-      (-> (to-transit {:user-data user-data
-                       :message "Successfully imported CSV"})
-          (response/response)
-          (response/content-type "application/transit+json"))
-      (-> (to-transit {:error "Importing the CSV failed, error: "})
-          (response/bad-request)
-          (response/content-type "application/transit+json")))))
+(defn import-csv [request] 
+  (try 
+    (-> (to-transit {:user-data (extract-user-data (from-transit (:body request)))
+                     :message "Successfully imported CSV"})
+        (response/response)
+        (response/content-type "application/transit+json"))
+    (catch Exception error
+      (-> (to-transit {:error (str "Importing the CSV failed, error: " error)})
+               (response/bad-request)
+               (response/content-type "application/transit+json")))))
 
-(defn save-current-session [request]
-  (let [body (:body request)
-        csv-content (io/generate-csv body)] 
-      (if csv-content
-        {:status 200 
-         :headers {"Content-Type" "text/csv"
-                   "Content-Disposition" "attachment; filename=\"passwords.csv\""}
-         :body csv-content}
-        {:status 401
-         :headers {"Content-Type" "application/json"}
-         :body (cjson/write-str {:message "Exporting user profile failed"})})))
+(defn export-csv [request]
+  (let [body (from-transit (:body request)) 
+        csv-content (io/generate-csv body)]
+    (try
+      (-> (to-transit {:user-data csv-content
+                       :message "Successfully exported CSV"})
+          (response/response)
+          (response/content-type "text/csv")
+          (response/header "Content-Disposition" "attachment; filename=\"passwords.csv\""))
+      (catch Exception error
+        (-> (to-transit {:error (str "Exporting the CSV failed, error: " error)})
+            (response/bad-request)
+            (response/content-type "text/csv"))))))
 
 (defn export-encrypted-csv [request]
   (let [body (:body request)

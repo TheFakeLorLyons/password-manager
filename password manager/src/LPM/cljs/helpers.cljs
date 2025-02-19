@@ -178,20 +178,16 @@
                       (reset! logged-in false)
                       (js/console.error "Failed obtain user profile:" error))}))
 
-(defn save-current-session [callback]
-  (let [user-profile-name (get @user-state :userProfileName)
-        user-login-password (get @user-state :userLoginPassword)
-        passwords  (get @user-state :passwords)]
-    (ajax/POST "http://localhost:3000/save-current-session"
-      {:params {:userProfileName user-profile-name
-                :userLoginPassword user-login-password
-                :passwords  passwords}
-       :headers {"Content-Type" "text/csv"}
-       :format :json
-       :handler (fn [response]
-                  (callback response))
+(defn export-csv [callback]
+    (ajax/POST "http://localhost:3000/export-csv"
+      {:params {:userProfileName (:userProfileName @user-state)
+                :userLoginPassword (:userLoginPassword @user-state)
+                :passwords  (:passwords @user-state)} 
+       :response-format (ajax/transit-response-format {:keywords? true})
+       :handler (fn [response] 
+                  (callback (:user-data response)))
        :error-handler (fn [error]
-                        (js/console.error "Failed to export csv:" error))})))
+                        (js/console.error "Failed to export csv:" error))}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 CRUD                ;

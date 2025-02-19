@@ -15,7 +15,7 @@
      (str "Export...")] 
    (str "Encrypted 0_0")])
 
-(defn export-encrypted-component []
+(defn encrypted-export-component []
   (let [export-success (r/atom false)]
     (fn []
       [:div.export-container
@@ -31,12 +31,12 @@
                         :transform "translate(5vh, 0vh)"
                         :text-weight "bold"}}])])))
 
-(defn save-session-component []
+(defn unencrypted-export-component []
   (let [export-success (r/atom false)]
     (fn []
       [:div.export-container
        [:button {:on-click (fn []
-                             (help/save-current-session
+                             (help/export-csv
                               (fn [csv-content]
                                 (help/download-csv csv-content "passwords.csv")
                                 (reset! export-success true)
@@ -59,8 +59,8 @@
                             (help/logout))} "Logout"]]
      (when (not @help/show-add-form)
        [:div.logged-in-io-buttons
-        [save-session-component]
-        [export-encrypted-component]])]
+        [unencrypted-export-component]
+        [encrypted-export-component]])]
     [:div.heading-container
      [:h1 "Lor's Password Manager"]]))
 
