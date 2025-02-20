@@ -1,6 +1,5 @@
 (ns LPM.clj.routes
-  (:require [compojure.core :refer [defroutes POST GET routes]]
-            [ring.adapter.jetty :refer [run-jetty]] 
+  (:require [compojure.core :refer [defroutes POST GET routes]] 
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.session.cookie :refer [cookie-store]]
             [ring.middleware.params :refer [wrap-params]]
@@ -28,23 +27,3 @@
                  :access-control-allow-methods [:get :post])
       (wrap-session {:store (cookie-store)})
       (wrap-authentication auth/auth-backend)))
-
-(defn -main [& args]
-  (run-jetty handler {:port 3000 :join? false}))
-
-(comment (-main)
-         (defonce server (atom nil))
-
-         (defn start-server []
-           (when @server
-             (.stop @server))  ;Stop the existing server if it's running
-           (reset! server (run-jetty #'handler {:port 3000 :join? false})))
-
-         (defn stop-server []
-           (when @server
-             (.stop @server)
-             (reset! server nil)))  ;Clear the server reference after stopping
-
-         (defn restart-server []
-           (stop-server)
-           (start-server)))

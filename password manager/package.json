@@ -4,6 +4,9 @@
   "main": "index.js",
   "scripts": {
     "start": "npx shadow-cljs watch app",
+    "dev": "clojure -X:dev LPM.dev/-main ",
+    "build": "npx shadow-cljs release app",
+    "prod": "java -jar target/LPM.jar",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -64,7 +64,6 @@
                       (callback false))}))
 
 (defn save-keys [keys]
-  (js/console.log "Checking save-keys: beginning" keys)
   (ajax/POST "http://localhost:3000/save-keys"
     {:params {:keys keys}
      :handler (fn [response] 

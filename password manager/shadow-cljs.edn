@@ -1,10 +1,17 @@
 {:source-paths ["src"]
- :deps {:aliases [:cljs]}
+ :deps {}
  :builds
  {:app
   {:target :browser
    :output-dir "resources/public/js"
    :asset-path "/js"
    :modules {:main {:entries [LPM.cljs.core]}}
+
    :devtools {:http-root "resources/public"
-              :http-port 8080}}}}
+              :http-port 8080}
+
+   :dev {:compiler-options {:closure-defines {"goog.DEBUG" true}}}
+
+   :release {:compiler-options {:optimizations :advanced
+                                :infer-externs true
+                                :closure-defines {"goog.DEBUG" false}}}}}}
