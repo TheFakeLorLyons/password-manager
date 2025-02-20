@@ -46,12 +46,9 @@
       (csv/write-csv *out* csv-data))))
 
 (defn generate-encrypted-csv [current-user]
-  (let [keys (sup/load-keys)
-        _ (println "Loaded -keys: " keys)
+  (let [keys (sup/load-keys) 
         secret-key (:secret-key keys) 
-        _ (println "Loaded secret-key: " secret-key)
         {:keys [userProfileName userLoginPassword passwords]} current-user
-        _ (println "cu enc data: " userProfileName "pws " passwords)
         password-list (for [{:keys [pName pContent pNotes]} passwords]
                         [pName
                          (sns/encrypt pContent secret-key)

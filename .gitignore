@@ -5,6 +5,7 @@
 .shadow-cljs
 .out
 
+target
 js
 keys.edn
 node_modules

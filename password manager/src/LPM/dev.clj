@@ -1,10 +1,9 @@
 (ns LPM.dev
+  (:gen-class)
   (:require [LPM.clj.routes :as routes]
             [shadow.cljs.devtools.api :as shadow]
             [shadow.cljs.devtools.server :as shadow-server]
-            [ring.adapter.jetty :refer [run-jetty]]
-            [clojure.java.io :as io]
-            [clojure.core.async :refer [go-loop <! timeout]]))
+            [ring.adapter.jetty :refer [run-jetty]]))
 
 (defonce server-ready (atom false))
 (defonce server-instance (atom nil))

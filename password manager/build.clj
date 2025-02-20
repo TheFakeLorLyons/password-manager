@@ -1,11 +1,11 @@
 (ns build
   (:require [clojure.tools.build.api :as b]))
 
-(def lib 'LPM/LPM)
+(def lib 'LPM)
 (def version "0.7.5")
 (def class-dir "target/classes")
 (def basis (b/create-basis {:project "deps.edn"}))
-(def uber-file (format "target/%s.jar" (name lib)))
+(def uber-file (format "target/password-manager.jar"))
 
 (defn clean [_]
   (b/delete {:path "target"}))
@@ -20,4 +20,4 @@
   (b/uber {:class-dir class-dir
            :uber-file uber-file
            :basis basis
-           :main 'LPM.routes}))
+           :main 'LPM.dev}))

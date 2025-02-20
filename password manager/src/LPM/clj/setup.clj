@@ -1,7 +1,5 @@
 (ns LPM.clj.setup
-  (:require [clojure.java.io :as io]
-            [clojure.data.json :as cjson]
-            [clojure.edn :as edn])
+  (:require [clojure.data.json :as cjson])
   (:import [java.security SecureRandom]
            [java.util Base64]))
 
@@ -38,8 +36,6 @@
 
 (defn load-keys []
   (let [file-content (slurp key-file)
-        _ (println "file content: " file-content)
-        parsed-content (cjson/read-str file-content :key-fn keyword)
-        _ (println "parsed file content: " parsed-content)]
+        parsed-content (cjson/read-str file-content :key-fn keyword)]
     {:public-key (base64->bytes (:public-key parsed-content))
      :secret-key (base64->bytes (:secret-key parsed-content))}))

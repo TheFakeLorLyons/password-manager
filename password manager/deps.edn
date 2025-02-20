@@ -17,7 +17,9 @@
         ring-cors/ring-cors {:mvn/version "0.1.13"}
         ring/ring-json {:mvn/version "0.5.1"}}
  :paths ["src"]
- :aliases {:prod {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
+ :aliases {:build {:deps {io.github.clojure/tools.build {:git/tag "v0.10.7" :git/sha "573711e"}}
+                   :ns-default build} 
+           :prod {:main-opts ["-m" "shadow.cljs.devtools.cli" "watch" "app"]}
            :dev {:extra-paths ["dev"]
                  :extra-deps {ring/ring-devel {:mvn/version "1.12.2"}}}
            :flowstorm-local {:classpath-overrides {org.clojure/clojure nil}

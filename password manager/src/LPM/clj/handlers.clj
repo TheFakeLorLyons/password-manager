@@ -1,11 +1,10 @@
 (ns LPM.clj.handlers
-  (:require  [LPM.clj.auth :as auth]
-             [LPM.clj.pwfuncs :as pwf]
-             [LPM.clj.io :as io]
-             [LPM.clj.setup :as sup]
-             [LPM.clj.user :as usr] 
-             [cognitect.transit :as transit]
-             [ring.util.response :as response])
+  (:require [LPM.clj.pwfuncs :as pwf]
+            [LPM.clj.io :as io]
+            [LPM.clj.setup :as sup]
+            [LPM.clj.user :as usr]
+            [cognitect.transit :as transit]
+            [ring.util.response :as response])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 (defn to-transit [data]
