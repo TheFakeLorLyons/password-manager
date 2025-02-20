@@ -1,13 +1,11 @@
 (ns LPM.clj.handlers
-  (:require [clojure.data.json :as cjson]
-            [LPM.clj.auth :as auth]
-            [LPM.clj.pwfuncs :as pwf]
-            [LPM.clj.io :as io]
-            [LPM.clj.setup :as sup]
-            [LPM.clj.user :as usr]
-            [clojure.java.io :as jio]
-            [cognitect.transit :as transit]
-            [ring.util.response :as response])
+  (:require  [LPM.clj.auth :as auth]
+             [LPM.clj.pwfuncs :as pwf]
+             [LPM.clj.io :as io]
+             [LPM.clj.setup :as sup]
+             [LPM.clj.user :as usr] 
+             [cognitect.transit :as transit]
+             [ring.util.response :as response])
   (:import [java.io ByteArrayInputStream ByteArrayOutputStream]))
 
 (defn to-transit [data]
@@ -31,32 +29,12 @@
     (if (and userProfileName userLoginPassword)
       (let [user-profile (usr/create-account userProfileName userLoginPassword)]
         (-> (to-transit {:user-profile user-profile
-                         :message "Account generated successfully password"})
+                         :message "Account generated successfully"})
             (response/response)
             (response/content-type "application/transit+json")))
       (-> (to-transit {:error "Login failed. Profile name or password mismatch."})
           (response/bad-request)
           (response/content-type "application/transit+json")))))
-
-(defn extract-user-data [data]
-  (let [{:keys [csv-content userProfileName userLoginPassword]} data
-        user-data  (io/csv-to-current-user csv-content)
-        pw-to-compare (:userLoginPassword user-data)
-        username-to-compare (:userProfileName user-data)]
-    (when (and (= userProfileName username-to-compare)
-               (auth/authenticate (auth/hash-password userLoginPassword) pw-to-compare))
-      user-data)))
-
-(defn import-csv [request] 
-  (try 
-    (-> (to-transit {:user-data (extract-user-data (from-transit (:body request)))
-                     :message "Successfully imported CSV"})
-        (response/response)
-        (response/content-type "application/transit+json"))
-    (catch Exception error
-      (-> (to-transit {:error (str "Importing the CSV failed, error: " error)})
-               (response/bad-request)
-               (response/content-type "application/transit+json")))))
 
 (defn export-csv [request]
   (let [body (from-transit (:body request)) 
@@ -72,28 +50,45 @@
             (response/bad-request)
             (response/content-type "text/csv"))))))
 
+(defn import-csv [request]
+  (let [csv-data (from-transit (:body request))]
+  (try
+    (-> (to-transit {:user-data (io/extract-user-data csv-data)
+                     :message "Successfully imported CSV"})
+        (response/response)
+        (response/content-type "application/transit+json"))
+    (catch Exception error
+      (-> (to-transit {:error (str "Importing the CSV failed, error: " error)})
+          (response/bad-request)
+          (response/content-type "application/transit+json"))))))
+
 (defn export-encrypted-csv [request]
-  (let [body (:body request)
-        csv-content (io/generate-encrypted-csv body)]
-    (if csv-content
-      {:status 200
-       :headers {"Content-Type" "text/csv"
-                 "Content-Disposition" "attachment; filename=\"encrypted.csv\""}
-       :body csv-content}
-      {:status 401
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str {:message "Exporting encrypted profile failed"})})))
+  (let [body (from-transit (:body request))
+        csv-data (io/generate-encrypted-csv body)] 
+      (try
+        (-> (to-transit {:user-data csv-data
+                         :message "Successfully exported CSV"})
+            (response/response)
+            (response/content-type "text/csv")
+            (response/header "Content-Disposition" "attachment; filename=\"encrypted.csv\""))
+        (catch Exception error
+          (-> (to-transit {:error (str "Exporting the CSV failed, error: " error)})
+              (response/bad-request)
+              (response/content-type "text/csv"))))))
 
 (defn import-encrypted [request]
-  (let [csv-data (:body request)
+  (let [csv-data (from-transit (:body request)) 
         decrypted-data (io/read-encrypted-csv csv-data)]
-    (if decrypted-data
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str decrypted-data)}
-      {:status 401
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str {:message "Importing encrypted profile failed"})})))
+    (try
+      (-> (to-transit {:user-data decrypted-data
+                       :message "Successfully imported CSV"})
+          (response/response)
+          (response/content-type "application/transit+json"))
+      (catch Exception error
+        (-> (to-transit {:error (str "Importing the CSV failed, error: " error)})
+            (response/bad-request)
+            (response/content-type "application/transit+json"))))))
+
 
 (defn generate-keys [request]
   (try
@@ -106,20 +101,17 @@
           (response/content-type "application/transit+json")))))
 
 (defn save-keys [request]
-  (let [body (:body request)    ; Convert response body from JSON
-        arr (get body "arr")    ; Extract the array from the body
-        secret-key (get arr 1)  ; First element is secret-key
-        public-key (get arr 3)  ; Second element is public-key
-        keys-to-save {:secret-key secret-key
-                      :public-key public-key}
-        saved-keys (sup/save-keys keys-to-save)]
+  (let [body (from-transit (:body request)) 
+        {:keys [public-key secret-key]} (:keys body)
+        saved-keys (sup/save-keys public-key secret-key)]
     (if saved-keys
-      {:status 200
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str saved-keys)}
-      {:status 500
-       :headers {"Content-Type" "application/json"}
-       :body (cjson/write-str {:message "Failed to save keys... "})})))
+      (-> (to-transit {:keys ({:keys [public-key secret-key]} saved-keys)
+                       :message "Keys saved successfully"})
+          (response/response)
+          (response/content-type "application/transit+json"))
+      (-> (to-transit {:error "Keys failed to save."})
+          (response/bad-request)
+          (response/content-type "application/transit+json")))))
 
 (defn check-setup-status [request]
   (try
@@ -135,13 +127,14 @@
                                         ;            PW Generation            ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn generate-a-password [size]
-  (if (and size (pos? size))
-    (let [password (pwf/generate-password size)]
-      (-> (to-transit {:password password
+(defn generate-a-password [request]
+  (let [body (from-transit (:body request))
+        size (parse-long (:size body))]
+    (if (and size (pos? size))
+      (-> (to-transit {:password (pwf/generate-password size)
                        :message "Password generated successfully password"})
           (response/response)
-          (response/content-type "application/transit+json")))
-    (-> (to-transit {:error "Invalid size parameter. Must be a positive integer."})
-        (response/bad-request)
-        (response/content-type "application/transit+json"))))
+          (response/content-type "application/transit+json"))
+      (-> (to-transit {:error "Invalid size parameter. Must be a positive integer."})
+          (response/bad-request)
+          (response/content-type "application/transit+json")))))

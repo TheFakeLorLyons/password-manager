@@ -28,6 +28,15 @@
                        :csv-string csv-string}
                       e)))))
 
+(defn extract-user-data [data]
+  (let [{:keys [csv-content userProfileName userLoginPassword]} data
+        user-data  (csv-to-current-user csv-content)
+        pw-to-compare (:userLoginPassword user-data)
+        username-to-compare (:userProfileName user-data)]
+    (when (and (= userProfileName username-to-compare)
+               (auth/authenticate (auth/hash-password userLoginPassword) pw-to-compare))
+      user-data)))
+
 (defn generate-csv [current-user]
   (let [{:keys [userProfileName userLoginPassword passwords]} current-user
         password-list (for [{:keys [pName pContent pNotes]} passwords]
@@ -38,15 +47,16 @@
 
 (defn generate-encrypted-csv [current-user]
   (let [keys (sup/load-keys)
-        secret-key (:secret-key keys)
-        user-info [(get current-user "userProfileName")
-                   (get current-user "userLoginPassword")]
-        passwords (get current-user "passwords")
-        data (for [password passwords]
-               [(get password "pName")
-                (sns/encrypt (get password "pContent") secret-key)
-                (sns/encrypt (get password "pNotes") secret-key)])
-        csv-data (cons user-info data)]
+        _ (println "Loaded -keys: " keys)
+        secret-key (:secret-key keys) 
+        _ (println "Loaded secret-key: " secret-key)
+        {:keys [userProfileName userLoginPassword passwords]} current-user
+        _ (println "cu enc data: " userProfileName "pws " passwords)
+        password-list (for [{:keys [pName pContent pNotes]} passwords]
+                        [pName
+                         (sns/encrypt pContent secret-key)
+                         (sns/encrypt pNotes secret-key)])
+        csv-data (cons [userProfileName userLoginPassword] password-list)]
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
@@ -57,15 +67,15 @@
                       [label data]))
                   entries))))
 
-(defn read-encrypted-csv [csv-data]
-  (let [csv-content (get csv-data "csv-content")
+(defn read-encrypted-csv [bulk-data]
+  (let [csv-content (:csv-content bulk-data) 
         keys (sup/load-keys)
         secret-key (:secret-key keys)
         [user-info & passwords] (str/split csv-content #"\n")
-        [username existing-hashed-password] (str/split user-info #",")
-        auth-result (auth/authenticate (get csv-data "userLoginPassword") existing-hashed-password)]
+        [existing-username existing-hashed-password] (str/split user-info #",") 
+        auth-result (auth/authenticate (:userLoginPassword bulk-data) existing-hashed-password)]
     (if (:authenticated auth-result)
-      (let [decrypted-user {:userProfileName username
+      (let [decrypted-user {:userProfileName existing-username
                             :userLoginPassword existing-hashed-password}
             decrypted-passwords (for [password-line passwords
                                       :let [[name encrypted-content encrypted-notes] (str/split password-line #",")]]

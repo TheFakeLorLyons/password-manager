@@ -27,19 +27,19 @@
 (defn- bytes->hex [bytes]
   (.encodeToString (Base64/getEncoder) bytes))
 
-(defn save-keys [keys]
+(defn save-keys [public secret]
   (let [current-time (java.time.Instant/now)
         keys-with-metadata {:setup-complete true
                             :completed-at current-time
-                            :public-key (:public-key keys)
-                            :secret-key (:secret-key keys)}]
+                            :public-key public
+                            :secret-key secret}]
     (spit key-file (cjson/write-str keys-with-metadata))
     keys-with-metadata))
 
 (defn load-keys []
   (let [file-content (slurp key-file)
-        _ (println "loaded parsed content" file-content)
-        parsed-content (cjson/read-str file-content :key-fn keyword)]
-    (println "loaded parsed content" parsed-content)
+        _ (println "file content: " file-content)
+        parsed-content (cjson/read-str file-content :key-fn keyword)
+        _ (println "parsed file content: " parsed-content)]
     {:public-key (base64->bytes (:public-key parsed-content))
      :secret-key (base64->bytes (:secret-key parsed-content))}))

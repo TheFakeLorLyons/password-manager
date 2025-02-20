@@ -115,10 +115,7 @@
                                       (validate-key (:public-key @help/key-state)))
                                (let [keys {:secret-key (:secret-key @help/key-state)
                                            :public-key (:public-key @help/key-state)}]
-                                 (help/save-keys keys)
-                                 (swap! help/key-state assoc :mode :complete
-                                        :history (conj (:history @help/key-state) :manual)))
-                               (swap! help/key-state assoc :error "Invalid key format. Keys should be 64-character hexadecimal strings."))}
+                                 (help/save-keys keys)))}
          "Save and Complete Setup"]]
 
        :complete
