@@ -2,13 +2,14 @@
 
 #### Updated 2/20/2024
 
-This is a password manager that works by encrypting and decrypting csvs locally. Saved csvs can be "logged into" as though they were accounts online. As of writing this, ~this application requires that the server is started separately from the front end; in the future I plan to automate the build process to do both of these things with one command~.
+This is a password manager that works by encrypting and decrypting csvs locally and allowing users to perform basic CRUD operations on their passwords. After having created an encrypted csv, you can 'log back into' the csv with the same credentials that were provided upon its creation.
 
 ### __Installation & Running__
 
 1. Ensure you have Clojure installed on your machine. You can follow the official installation guide: https://clojure.org/guides/install_clojure.
 
 2. Clone this repository to your local machine:
+
 `git clone https://github.com/TheFakeLorLyons/password-manager.git`
 
 3. Navigate the root directory containing deps edn (`cd 'password manager'`).
