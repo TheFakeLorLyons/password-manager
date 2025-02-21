@@ -12,7 +12,7 @@ This is a password manager that works by encrypting and decrypting csvs locally 
 
 `git clone https://github.com/TheFakeLorLyons/password-manager.git`
 
-3. Navigate the root directory containing deps edn (`cd 'password manager'`).
+3. Navigate the root directory containing deps.edn (`cd 'password manager'`).
 
 4. If it is your first time running the application, run the CLI command `npm run install-and-start` in order to install the necessary dependencies, build the application, start the server (on port: 3000), and host the front end at http://localhost:8080/. It will take several minutes for all the required dependencies to install, the server to build, and for the front end to start. After doing this the first time, `npm run start!` will much more quickly begin the server and front end because the files will have been built already.
 
