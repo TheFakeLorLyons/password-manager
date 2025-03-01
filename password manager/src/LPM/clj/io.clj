@@ -18,7 +18,7 @@
        :userLoginPassword login-password
        :passwords (mapv (fn [line]
                           (let [[id pName pContent pNotes] (str/split line #",")]
-                            {:id id
+                            {:id (parse-long id)
                              :pName pName
                              :pContent pContent
                              :pNotes pNotes}))
@@ -59,27 +59,20 @@
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
-(defn parse-encrypted-data [data-string]
-  (let [entries (str/split data-string #"\n")]
-    (into {} (map (fn [entry]
-                    (let [[label data] (str/split entry #",")]
-                      [label data]))
-                  entries))))
-
-(defn read-encrypted-csv [bulk-data]
-  (let [csv-content (:csv-content bulk-data) 
+(defn read-encrypted-csv [data]
+  (let [csv-content (:csv-content data) 
         keys (sup/load-keys)
         secret-key (:secret-key keys)
         [user-info & passwords] (str/split csv-content #"\n")
         [existing-username existing-hashed-password] (str/split user-info #",") 
-        auth-result (auth/authenticate (:userLoginPassword bulk-data) existing-hashed-password)]
+        auth-result (auth/authenticate (:userLoginPassword data) existing-hashed-password)]
     (if (:authenticated auth-result)
       (let [decrypted-user {:userProfileName existing-username
                             :userLoginPassword existing-hashed-password}
             decrypted-passwords (for [password-line passwords
-                                      :let [[id encrypted-content encrypted-notes] (str/split password-line #",")]]
-                                  {:id id
-                                   :pName (sns/decrypt-entry encrypted-content secret-key)
+                                      :let [[id encrypted-name encrypted-content encrypted-notes] (str/split password-line #",")]]
+                                  {:id (parse-long id)
+                                   :pName (sns/decrypt-entry encrypted-name secret-key)
                                    :pContent (sns/decrypt-entry encrypted-content secret-key)
                                    :pNotes (sns/decrypt-entry encrypted-notes secret-key)})]
         {:authenticated true

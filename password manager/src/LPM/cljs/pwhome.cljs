@@ -109,7 +109,7 @@
    [plus-sign-component]])
 
 (defn standard-pw-list-view []
-  [:ul {:style {:order "reversed"}}
+  [:ul
    (doall
     (map-indexed
      (fn [index password]
@@ -133,9 +133,8 @@
     [:ul
      [:li.password-list {:style {:list-style-type "numbered"
                                  :border-bottom ".5pt solid #b5b8d39d"}}
-      [:input {:type "text"
-               :value (:pName @help/editing-password)
-               :on-change #(swap! help/editing-password assoc :pName (-> % .-target .-value))}]
+      [:label {:type "text"
+               :value (:id @help/user-state)}]
       [:input {:type "text"
                :value (:pName @help/editing-password)
                :on-change #(swap! help/editing-password assoc :pName (-> % .-target .-value))}]
@@ -156,9 +155,8 @@
 
 (defn logged-in-view []
   (fn []
-    (let [user-state @help/user-state
-          profile-name (:userProfileName user-state)
-          passwords (get user-state :passwords)]
+    (let [profile-name (:userProfileName @help/user-state)
+          passwords (:passwords @help/user-state)]
       [:div.main-container
        [heading-box]
        [:div
