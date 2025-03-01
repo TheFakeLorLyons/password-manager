@@ -109,21 +109,23 @@
    [plus-sign-component]])
 
 (defn standard-pw-list-view []
-  [:ul
+  [:ul {:style {:order "reversed"}}
    (doall
     (map-indexed
      (fn [index password]
        ^{:key index}
        [:li.password-list {:style {:list-style-type "numbered"
                                    :border-bottom ".5pt solid #b5b8d39d"}}
-        "|-----Name-----: " (get password :pName);
+        [:div
+         "|-------ID-------:" (:id password)]
+        "|-----Name-----: " (:pName password)
         [:div.pw-list-options
-         "|-PW Content-: " (get password :pContent);
+         "|-PW Content-: " (:pContent password)
          [:div.pw-list-buttons
           [edit-pw-component password]
           [copy-pw-component (:pContent password)]
           [delete-pw-component password]]]
-        "|-----Notes-----: " (get password :pNotes)])
+        "|-----Notes-----: " (:pNotes password)])
      (:passwords @help/user-state)))]);taking the passwords from user state and iterating the above
 
 (defn editing-pw-view []

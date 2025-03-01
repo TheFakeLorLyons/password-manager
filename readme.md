@@ -1,4 +1,4 @@
-## __Lors Password Manager__
+## __Pages Password Manager__
 
 #### Updated 2/20/2024
 
@@ -6,7 +6,9 @@ This is a password manager that works by encrypting and decrypting csvs locally 
 
 ### __Installation & Running__
 
-1. Ensure you have Clojure installed on your machine. You can follow the official installation guide: https://clojure.org/guides/install_clojure.
+1. Ensure you have Clojure installed on your machine. You can follow the official installation guide: 
+
+https://clojure.org/guides/install_clojure.
 
 2. Clone this repository to your local machine:
 
@@ -14,7 +16,9 @@ This is a password manager that works by encrypting and decrypting csvs locally 
 
 3. Navigate the root directory containing deps.edn (`cd 'password manager'`).
 
-4. If it is your first time running the application, run the CLI command `npm run install-and-start` in order to install the necessary dependencies, build the application, start the server (on port: 3000), and host the front end at http://localhost:8080/. It will take several minutes for all the required dependencies to install, the server to build, and for the front end to start. After doing this the first time, `npm run start!` will much more quickly begin the server and front end because the files will have been built already.
+4. If it is your first time running the application, run the CLI command `npm run install-and-start` in order to install the necessary dependencies, build the application, start the server (on port: 3000), and host the front end at http://localhost:8080/. It will take several minutes for all the required dependencies to install, the server to build, and for the front end to start. 
+
+**After doing this the first time**, `npm run start!` will much more quickly begin the server and front end because the files will have been built already.
 
 5. (One time only) Upon loading the application for the first time, it will prompt you to generate or manually locally stored, 64-bit public and private keys, which will be used for the encryption and decryption of passwords.
 
@@ -50,4 +54,4 @@ The keys will be saved, and the application will restart, allowing you to begin 
 
 - Git, yml, flowstorm debugger, supporting technologies! Helping me to host this and also ensure it is working correctly respectively.
 
-###### Thank you for taking the time to look at my application and feel free to reach out with any questions -Lor
+###### Thank you for taking the time to look at my application and feel free to reach out with any questions -Page

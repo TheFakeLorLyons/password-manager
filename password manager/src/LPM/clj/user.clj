@@ -3,7 +3,8 @@
 
 (def current-user (atom {:userProfileName nil
                          :userLoginPassword nil
-                         :passwords [{:pName nil
+                         :passwords [{:id nil
+                                      :pName nil
                                       :pContent nil
                                       :pNotes nil}]}))
 

@@ -114,10 +114,11 @@
                       login-password (:userLoginPassword (:user-data response))
                       processed-passwords (doall
                                            (mapv (fn [pw]
-                                                   (let [pName (:pName pw)
+                                                   (let [id (:pName pw) 
+                                                         pName (:pName pw)
                                                          pContent (:pContent pw)
                                                          pNotes (:pNotes pw)]
-                                                     {:pName pName :pContent pContent :pNotes pNotes}))
+                                                     {:id id :pName pName :pContent pContent :pNotes pNotes}))
                                                  (:passwords (:user-data response))))]
                   (reset! user-state {:userProfileName profile-name
                                       :userLoginPassword login-password
@@ -237,13 +238,14 @@
 (defn add-new-password
   "This function adds a new password in to the front end user atom,
    to be saved to csv prior to exiting."
-  [e form-pName form-pContent form-pNotes error-message]
+  [e pName pContent pNotes error-message]
   (.preventDefault e)
   (let [new-password
-        {:pName form-pName
-         :pContent form-pContent
-         :pNotes form-pNotes}]
-    (if (and (seq form-pName) (seq form-pContent))
+        {:id (inc (:id (last (:passwords @user-state))))
+         :pName pName
+         :pContent pContent
+         :pNotes pNotes}]
+    (if (and (seq pName) (seq pContent))
       (do
         (reset! error-message "")
         (swap! user-state update :passwords conj new-password);swap in the new password
@@ -267,8 +269,7 @@
     (swap! user-state update-in
            [:passwords]
            (fn [passwords]
-             (let [updated-passwords (remove #(= (:pName %) pw-string) passwords)]
-               updated-passwords)))))
+             (vec (remove #(= (:pName %) pw-string) passwords))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;              JS Interop             ;
