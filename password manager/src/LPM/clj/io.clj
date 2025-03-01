@@ -17,8 +17,9 @@
       {:userProfileName profile-name
        :userLoginPassword login-password
        :passwords (mapv (fn [line]
-                          (let [[pName pContent pNotes] (str/split line #",")]
-                            {:pName pName
+                          (let [[id pName pContent pNotes] (str/split line #",")]
+                            {:id id
+                             :pName pName
                              :pContent pContent
                              :pNotes pNotes}))
                         password-lines)})
@@ -39,8 +40,8 @@
 
 (defn generate-csv [current-user]
   (let [{:keys [userProfileName userLoginPassword passwords]} current-user
-        password-list (for [{:keys [pName pContent pNotes]} passwords]
-               [pName pContent pNotes]) 
+        password-list (for [{:keys [id pName pContent pNotes]} passwords]
+               [id pName pContent pNotes]) 
         csv-data (cons [userProfileName userLoginPassword] password-list)]
     (with-out-str
       (csv/write-csv *out* csv-data))))
@@ -48,9 +49,10 @@
 (defn generate-encrypted-csv [current-user]
   (let [keys (sup/load-keys) 
         secret-key (:secret-key keys) 
-        {:keys [userProfileName userLoginPassword passwords]} current-user
-        password-list (for [{:keys [pName pContent pNotes]} passwords]
-                        [pName
+        {:keys [id userProfileName userLoginPassword passwords]} current-user
+        password-list (for [{:keys [id pName pContent pNotes]} passwords]
+                        [id
+                         (sns/encrypt pName secret-key)
                          (sns/encrypt pContent secret-key)
                          (sns/encrypt pNotes secret-key)])
         csv-data (cons [userProfileName userLoginPassword] password-list)]
@@ -75,8 +77,9 @@
       (let [decrypted-user {:userProfileName existing-username
                             :userLoginPassword existing-hashed-password}
             decrypted-passwords (for [password-line passwords
-                                      :let [[name encrypted-content encrypted-notes] (str/split password-line #",")]]
-                                  {:pName name
+                                      :let [[id encrypted-content encrypted-notes] (str/split password-line #",")]]
+                                  {:id id
+                                   :pName (sns/decrypt-entry encrypted-content secret-key)
                                    :pContent (sns/decrypt-entry encrypted-content secret-key)
                                    :pNotes (sns/decrypt-entry encrypted-notes secret-key)})]
         {:authenticated true

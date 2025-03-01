@@ -136,6 +136,9 @@
       [:input {:type "text"
                :value (:pName @help/editing-password)
                :on-change #(swap! help/editing-password assoc :pName (-> % .-target .-value))}]
+      [:input {:type "text"
+               :value (:pName @help/editing-password)
+               :on-change #(swap! help/editing-password assoc :pName (-> % .-target .-value))}]
 
       [:input {:type "text"
                :value (:pContent @help/editing-password)

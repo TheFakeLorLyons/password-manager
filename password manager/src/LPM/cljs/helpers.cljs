@@ -114,7 +114,7 @@
                       login-password (:userLoginPassword (:user-data response))
                       processed-passwords (doall
                                            (mapv (fn [pw]
-                                                   (let [id (:pName pw) 
+                                                   (let [id (:id pw) 
                                                          pName (:pName pw)
                                                          pContent (:pContent pw)
                                                          pNotes (:pNotes pw)]
@@ -150,10 +150,11 @@
                       processed-passwords (doall
                                            (mapv
                                             (fn [pw]
-                                              (let [pName (:pName pw)
+                                              (let [id (:id pw)
+                                                    pName (:pName pw)
                                                     pContent (:pContent pw)
                                                     pNotes (:pNotes pw)]
-                                                {:pName pName :pContent pContent :pNotes pNotes}))
+                                                {:id id :pName pName :pContent pContent :pNotes pNotes}))
                                             (:passwords (:user-data response))))]
                   (reset! user-state {:userProfileName profile-name
                                       :userLoginPassword login-password
@@ -257,7 +258,7 @@
   (swap! user-state update-in [:passwords]
          (fn [passwords]
            (mapv (fn [password]
-                   (if (= (:pName updated-password) (:pName password))
+                   (if (= (:id updated-password) (:id password))
                      updated-password
                      password))
                  passwords)))
@@ -296,3 +297,8 @@
     (.appendChild js/document.body link)
     (.click link)
     (.removeChild js/document.body link)))
+
+
+;move the add password icon out of the pw edit
+;also split the buttons on that page
+;also back button
