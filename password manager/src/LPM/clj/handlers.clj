@@ -52,7 +52,7 @@
 (defn import-csv [request]
   (let [csv-data (from-transit (:body request))]
   (try
-    (-> (to-transit {:user-data (io/extract-user-data csv-data)
+    (-> (to-transit {:user-data (io/read-csv csv-data)
                      :message "Successfully imported CSV"})
         (response/response)
         (response/content-type "application/transit+json"))

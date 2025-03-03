@@ -9,46 +9,41 @@
                                         ;     converting csv data to atom     ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn csv-to-current-user [csv-string]
+(defn read-csv [data]
   (try
-    (let [lines (str/split-lines csv-string)
+    (let [{:keys [csv-content userProfileName userLoginPassword]} data
+          lines (str/split-lines csv-content)
           [header & password-lines] lines
-          [profile-name login-password] (str/split header #",")]
-      {:userProfileName profile-name
-       :userLoginPassword login-password
-       :passwords (mapv (fn [line]
-                          (let [[id pName pContent pNotes] (str/split line #",")]
-                            {:id (parse-long id)
-                             :pName pName
-                             :pContent pContent
-                             :pNotes pNotes}))
-                        password-lines)})
+          [existing-username existing-hashed-password] (str/split header #",")]
+      (when (and (= userProfileName existing-username)
+                 (auth/authenticate (auth/hash-password userLoginPassword)
+                                    existing-hashed-password))
+        {:userProfileName existing-username
+         :userLoginPassword userLoginPassword
+         :passwords (mapv (fn [line]
+                            (let [[id pName pContent pNotes] (str/split line #",")]
+                              {:id (parse-long id)
+                               :pName pName
+                               :pContent pContent
+                               :pNotes pNotes}))
+                          password-lines)}))
     (catch Exception e
       (throw (ex-info (str "Error processing CSV:" (ex-message e))
                       {:id ::csv-failed
-                       :csv-string csv-string}
+                       :csv-string (:csv-content data)}
                       e)))))
-
-(defn extract-user-data [data]
-  (let [{:keys [csv-content userProfileName userLoginPassword]} data
-        user-data  (csv-to-current-user csv-content)
-        pw-to-compare (:userLoginPassword user-data)
-        username-to-compare (:userProfileName user-data)]
-    (when (and (= userProfileName username-to-compare)
-               (auth/authenticate (auth/hash-password userLoginPassword) pw-to-compare))
-      user-data)))
 
 (defn generate-csv [current-user]
   (let [{:keys [userProfileName userLoginPassword passwords]} current-user
         password-list (for [{:keys [id pName pContent pNotes]} passwords]
-               [id pName pContent pNotes]) 
+                        [id pName pContent pNotes])
         csv-data (cons [userProfileName userLoginPassword] password-list)]
     (with-out-str
       (csv/write-csv *out* csv-data))))
 
 (defn generate-encrypted-csv [current-user]
-  (let [keys (sup/load-keys) 
-        secret-key (:secret-key keys) 
+  (let [keys (sup/load-keys)
+        secret-key (:secret-key keys)
         {:keys [id userProfileName userLoginPassword passwords]} current-user
         password-list (for [{:keys [id pName pContent pNotes]} passwords]
                         [id
@@ -60,23 +55,20 @@
       (csv/write-csv *out* csv-data))))
 
 (defn read-encrypted-csv [data]
-  (let [csv-content (:csv-content data) 
-        keys (sup/load-keys)
-        secret-key (:secret-key keys)
-        [user-info & passwords] (str/split csv-content #"\n")
-        [existing-username existing-hashed-password] (str/split user-info #",") 
-        auth-result (auth/authenticate (:userLoginPassword data) existing-hashed-password)]
-    (if (:authenticated auth-result)
-      (let [decrypted-user {:userProfileName existing-username
-                            :userLoginPassword existing-hashed-password}
-            decrypted-passwords (for [password-line passwords
-                                      :let [[id encrypted-name encrypted-content encrypted-notes] (str/split password-line #",")]]
-                                  {:id (parse-long id)
-                                   :pName (sns/decrypt-entry encrypted-name secret-key)
-                                   :pContent (sns/decrypt-entry encrypted-content secret-key)
-                                   :pNotes (sns/decrypt-entry encrypted-notes secret-key)})]
-        {:authenticated true
-         :userProfileName (:userProfileName decrypted-user)
-         :userLoginPassword (:userLoginPassword decrypted-user)
-         :passwords decrypted-passwords})
-      {:authenticated false})))
+  (try
+    (let [keys (sup/load-keys)
+          secret-key (:secret-key keys)
+          authenticated-data (read-csv data)]
+      (when authenticated-data
+        (let [decrypted-passwords (mapv (fn [password-info]
+                                           {:id (:id password-info)
+                                            :pName (sns/decrypt-entry (:pName password-info) secret-key)
+                                            :pContent (sns/decrypt-entry (:pContent password-info) secret-key)
+                                            :pNotes (sns/decrypt-entry (:pNotes password-info) secret-key)})
+                                         (:passwords authenticated-data))]
+          {:userProfileName (:userProfileName authenticated-data)
+           :userLoginPassword (:userLoginPassword authenticated-data)
+           :passwords decrypted-passwords})))
+    (catch Exception e
+      (println "Error in read-encrypted-csv:" (ex-message e))
+      nil)))

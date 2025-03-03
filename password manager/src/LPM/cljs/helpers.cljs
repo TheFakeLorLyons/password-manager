@@ -227,8 +227,7 @@
         (do
           (js/setTimeout  ;Ensure csv-content is set before making request
            (fn []
-             (js/console.log "handling-login:" @csv-content profile-name)
-             (import-csv @profile-name @login-password)) ;Make API request
+             (import-csv @profile-name @login-password))
            100)
           (reset! logged-in true))
         (do
@@ -297,8 +296,3 @@
     (.appendChild js/document.body link)
     (.click link)
     (.removeChild js/document.body link)))
-
-
-;move the add password icon out of the pw edit
-;also split the buttons on that page
-;also back button

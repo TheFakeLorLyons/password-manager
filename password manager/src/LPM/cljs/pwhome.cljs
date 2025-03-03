@@ -1,7 +1,8 @@
 (ns LPM.cljs.pwhome
   (:require [reagent.core :as r]
             [LPM.cljs.helpers :as help]
-            [LPM.cljs.generation :as gen]))
+            [LPM.cljs.generation :as gen]
+            [LPM.cljs.editing :as edit]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;           If logged-in              ;
@@ -12,8 +13,8 @@
 (defn rainbow-export []
   [:div.rainbow-text
     [:div {:style {:color  "#290c35"}}
-     (str "Export...")] 
-   (str "Encrypted 0_0")])
+     "Export..."] 
+   "Encrypted 0_0"])
 
 (defn encrypted-export-component []
   (let [export-success (r/atom false)]
@@ -81,18 +82,19 @@
         :on-click #(help/copy-text-to-clipboard @text)}
        "[]"])))
 
-(defn edit-pw-component [editing-password]
-  (let [text (r/atom editing-password)]
-    (fn []
-      [:button
-       {:id "edit-pw-button"
-        :on-click #(reset! help/editing-password editing-password)}
-       "Edit"])))
+(defn edit-pw-component [current-password updated-password]
+  (fn []
+    [:button
+     {:id "edit-pw-button"
+      :on-click (fn [] 
+                  (reset! help/editing-password true) 
+                  (reset! updated-password current-password))}
+     "Edit"]))
 
 (defn plus-sign-component []
   (let [click-handler
         (fn [] (reset! help/show-add-form true)
-          (reset! help/editing-password nil))]
+          (reset! help/editing-password false))]
     [:div.add-button-container
      [:input {:type "button"
               :id "plus-button"
@@ -105,10 +107,11 @@
     (str "Hello " profile-name ", you logged in at " (current-time))];@=newuser
    [:div {:style {:border-bottom "1pt solid #ede9f6"
                   :width "max"
-                  :align-self "center"}}]
-   [plus-sign-component]])
+                  :align-self "center"}}] 
+   (when (not @help/editing-password)
+    [plus-sign-component])])
 
-(defn standard-pw-list-view []
+(defn standard-pw-list-view [updated-password]
   [:ul
    (doall
     (map-indexed
@@ -122,52 +125,28 @@
         [:div.pw-list-options
          "|-PW Content-: " (:pContent password)
          [:div.pw-list-buttons
-          [edit-pw-component password]
+          [edit-pw-component password updated-password]
           [copy-pw-component (:pContent password)]
           [delete-pw-component password]]]
         "|-----Notes-----: " (:pNotes password)])
-     (:passwords @help/user-state)))]);taking the passwords from user state and iterating the above
-
-(defn editing-pw-view []
-  (fn []
-    [:ul
-     [:li.password-list {:style {:list-style-type "numbered"
-                                 :border-bottom ".5pt solid #b5b8d39d"}}
-      [:label {:type "text"
-               :value (:id @help/user-state)}]
-      [:input {:type "text"
-               :value (:pName @help/editing-password)
-               :on-change #(swap! help/editing-password assoc :pName (-> % .-target .-value))}]
-
-      [:input {:type "text"
-               :value (:pContent @help/editing-password)
-               :on-change #(swap! help/editing-password assoc :pContent (-> % .-target .-value))}]
-      [:input {:type "text"
-               :value (:pNotes @help/editing-password)
-               :on-change #(swap! help/editing-password assoc :pNotes (-> % .-target .-value))}]
-      [:div.edit-pw-list-buttons
-       [:button
-        {:on-click #(help/update-password @help/editing-password)}
-        "Save"]
-       [:button
-        {:on-click #(reset! help/editing-password nil)}
-        "Cancel"]]]]));displays the specific password to be edited
+     (:passwords @help/user-state)))])
 
 (defn logged-in-view []
-  (fn []
-    (let [profile-name (:userProfileName @help/user-state)
-          passwords (:passwords @help/user-state)]
-      [:div.main-container
-       [heading-box]
-       [:div
-        (when (not @help/show-add-form)
-          [greeting profile-name])
-        (when @help/show-add-form
-          [gen/generation-form-box])
-        (if @help/editing-password
-          [editing-pw-view]
+  (let [updated-password (r/atom "")]
+    (fn []
+      (let [profile-name (:userProfileName @help/user-state)
+            passwords (:passwords @help/user-state)]
+        [:div.main-container
+         [heading-box]
+         [:div
           (when (not @help/show-add-form)
-            [standard-pw-list-view]))
-        (when (and (not @help/show-add-form) (empty? passwords))
-          [:div
-           "You have no passwords yet"])]])))
+            [greeting profile-name])
+          (when @help/show-add-form
+            [gen/generation-form-box])
+          (if @help/editing-password
+            [edit/editing-pw-view updated-password]
+            (when (not @help/show-add-form)
+              [standard-pw-list-view updated-password]))
+          (when (and (not @help/show-add-form) (empty? passwords))
+            [:div
+             "You have no passwords yet"])]]))))

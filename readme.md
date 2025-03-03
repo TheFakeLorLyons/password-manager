@@ -26,7 +26,7 @@ The keys will be saved, and the application will restart, allowing you to begin 
 
 ### __ToDo__
 
-1. Implement IDs to passwords
+✅ Implement IDs to passwords
 
 2. Implement Certificates / Tokens for enhanced security
 
@@ -36,7 +36,7 @@ The keys will be saved, and the application will restart, allowing you to begin 
 
 ✅ Automate the build process to run the server and front end in one command
 
-6. Work on browser extension extension
+6. Work on browser extension integration
 
 7. Auto-Renewing Passwords
 
