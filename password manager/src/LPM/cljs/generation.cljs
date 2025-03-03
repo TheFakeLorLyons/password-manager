@@ -65,7 +65,7 @@
 (defn add-a-new-password-form [password-name password-content password-notes]
   (let [error-message (r/atom "")]
     (fn []
-      [:form.generation-input-field-container ;change this from login container?
+      [:form.generation-input-field-container
        [:h3 "Details"]
        [:input {:type "text"
                 :id "newPasswordNameField"
@@ -84,7 +84,7 @@
        [:input {:type "text"
                 :id "passwordNotesField"
                 :name "password-notes"
-                :placeholder "Password Notes(Optional) "
+                :placeholder "Password Notes (Optional) "
                 :required false
                 :value @password-notes
                 :on-change #(reset! password-notes (-> % .-target .-value))}]

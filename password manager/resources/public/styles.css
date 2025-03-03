@@ -100,9 +100,6 @@ body {
   cursor: pointer;
   margin: 20px;
 }
-#back-button {
-  transform: translate(20vh, 0vh);
-}
 .generation-container {
   display: flex;
   justify-content: center; /* Center columns horizontally */
@@ -142,6 +139,10 @@ body {
 .pw-list-buttons {
   display: flex;
   gap: 10px;
+}
+.edit-label {
+  margin-top: 6px;
+  margin-bottom: 10px;
 }
 /*Error messages if improper login*/
 .error-message {
@@ -300,6 +301,7 @@ form {
   margin-bottom: 30px;
   margin-right: 35vh;
   cursor: pointer;
+  transform: translate(20vh, 0vh);
 }
 #plus-button {
   font-size: 20px;

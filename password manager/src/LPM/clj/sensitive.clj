@@ -51,9 +51,9 @@
 
 (defn encrypt [data secret-key] 
   (let [cipher (Cipher/getInstance "AES/GCM/NoPadding" "BC")
-       iv (generate-random-iv iv-size)
-       gcm-spec (GCMParameterSpec. tag-size iv)
-       key-spec (SecretKeySpec. secret-key "AES")]
+        iv (generate-random-iv iv-size)
+        gcm-spec (GCMParameterSpec. tag-size iv)
+        key-spec (SecretKeySpec. secret-key "AES")]
    (try
      (.init cipher Cipher/ENCRYPT_MODE key-spec gcm-spec)
      (let [data-bytes (.getBytes data "UTF-8")
@@ -80,3 +80,4 @@
        (catch Exception e
          (.printStackTrace e)
          nil)))))
+

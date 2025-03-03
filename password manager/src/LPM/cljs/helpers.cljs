@@ -5,7 +5,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;              csv functions          ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def csv-content (r/atom nil))
+(def edn-content (r/atom nil))
 
 (defn read-file [file callback]
   (let [reader (js/FileReader.)]
@@ -18,7 +18,7 @@
 (defn handle-file-selection [file]
   (read-file file
              (fn [content]
-               (reset! csv-content content))))
+               (reset! edn-content content))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 State               ;
@@ -56,131 +56,70 @@
 
 (defn check-setup [callback]
   (ajax/GET "http://localhost:3000/check-setup-status"
-    {:response-format :json
-     :keywords? true
+    {:response-format (ajax/transit-response-format {:keywords? true})
      :handler (fn [response]
-                (js/console.log "Checking setup status: response")
-                (println "Success:" response)
                 (reset! setup-complete (:setup-complete response))
                 (callback response))
-     :error-handler (fn [error]
-                      (println "Error:" error)
+     :error-handler (fn []
                       (callback false))}))
 
 (defn save-keys [keys]
-  (js/console.log "Checking save-keys: beginning" keys)
   (ajax/POST "http://localhost:3000/save-keys"
-    {:headers {"Content-Type" "application/json"}
-     :body (js/JSON.stringify keys)}
-    (fn [response]
-      (if (= (.-status response) 200)
-        (js/console.log "Keys saved successfully")
-        (js/console.error "Failed to save keys"
-                          (.-status response)
-                          (.-statusText response))))
-    (fn [error]
-      (js/console.error "Fetch error:" error))))
+    {:params {:keys keys}
+     :handler (fn [response] 
+                (swap! key-state assoc :mode :complete
+                       :history (conj (:history @key-state) :manual)
+                       :secret-key (:secret-key (:keys response))
+                       :public-key (:public-key (:keys response))
+                       :error nil))}))
 
 (defn generate-keys []
   (js/Promise.
    (fn [resolve reject]
      (ajax/POST "http://localhost:3000/generate-keys"
-       {:headers {"Content-Type" "application/json"}
-        :response-format :json
-        :keywords? true
+       {:response-format (ajax/transit-response-format {:keywords? true}) 
         :handler  (fn [response]
-                    (js/console.log "Checking setup status: " response)
-                    (if (and (:secret-key response) (:public-key response))
+                    (let [{:keys [secret-key public-key]} response]
+                    (if (and secret-key public-key)
                       (do
                         (swap! key-state assoc
-                               :secret-key (:secret-key keys)
-                               :public-key (:public-key keys))
-                        (js/console.log "Keys set in key-state" keys)
+                               :secret-key secret-key
+                               :public-key public-key) 
                         (resolve response))
-                      (js/console.error "No keys in response")))
+                      (js/console.error "No keys in response"))))
         :error-handler (fn [error]
                          (js/console.error "Fetch error:" error)
                          (reject error))}))))
 
 (defn generate-password-request [size]
-  (let [entered-size (if (seq size) size "12")
-        url (str "http://localhost:3000/generate-a-password?size=" entered-size)]
+  (let [entered-size (if (seq size) size "12")]
     (js/Promise.
      (fn [resolve reject]
-       (ajax/GET url
-         {:response-format (ajax/json-response-format {:keywords? true})
+       (ajax/POST "http://localhost:3000/generate-a-password"
+         {:params {:size entered-size}
+          :response-format (ajax/transit-response-format {:keywords? true})
           :handler (fn [response]
-                     (resolve (get response :password)))
+                     (resolve (:password response)))
           :error-handler (fn [error]
                            (reject error))})))))
 
-(defn import-encrypted-csv [profile-name login-password]
-  (ajax/POST "http://localhost:3000/import-encrypted-csv"
-    {:params {:csv-content @csv-content
+(defn import-edn [profile-name login-password]
+  (ajax/POST "http://localhost:3000/import-edn"
+    {:params {:edn-content @edn-content
               :userProfileName profile-name
-              :userLoginPassword login-password}
-     :headers {"Content-Type" "application/json"}
-     :format :json
-     :response-format :json
-     :handler (fn [response]
-                (let [profile-name (get response "userProfileName")
-                      login-password (get response "userLoginPassword")
-                      processed-passwords
-                      (doall
-                       (mapv
-                        (fn [pw]
-                          (let [pName (get pw "pName")
-                                pContent (get pw "pContent")
-                                pNotes (get pw "pNotes")]
-                            {:pName pName
-                             :pContent pContent
-                             :pNotes pNotes}))
-                        (get response "passwords")))]
-                  (reset! user-state {:userProfileName profile-name
-                                      :userLoginPassword login-password
-                                      :passwords processed-passwords}))
-                (reset! logged-in true))
-     :error-handler (fn [error]
-                      (reset! logged-in false)
-                      (js/console.error "Failed obtain user profile:" error))}))
-
-(defn export-encrypted-csv [callback]
-  (let [user-profile-name (get @user-state :userProfileName)
-        user-login-password (get @user-state :userLoginPassword)
-        passwords  (get @user-state :passwords)]
-    (ajax/POST "http://localhost:3000/export-encrypted-csv"
-      {:params {:userProfileName user-profile-name
-                :userLoginPassword user-login-password
-                :passwords  passwords}
-       :format :json
-       :response-format :raw
-       :handler (fn [response]
-                  (callback response))
-       :error-handler (fn [error]
-                        (js/console.error "Failed to export csv:" error))})))
-
-(defn request-existing-csv [profile-name login-password]
-  (ajax/POST "http://localhost:3000/request-existing-csv"
-    {:params {:csv-content @csv-content
-              :userProfileName profile-name
-              :userLoginPassword login-password}
-     :headers {"Content-Type" "application/json"}
-     :format :json
-     :response-format :json
-     :handler (fn [response]
-                (let [profile-name (get response "userProfileName")
-                      login-password (get response "userLoginPassword")
-                      processed-passwords
-                      (doall
-                       (mapv
-                        (fn [pw]
-                          (let [pName (get pw "pName")
-                                pContent (get pw "pContent")
-                                pNotes (get pw "pNotes")]
-                            {:pName pName
-                             :pContent pContent
-                             :pNotes pNotes}))
-                        (get response "passwords")))]
+              :userLoginPassword login-password} 
+     :response-format (ajax/transit-response-format {:keywords? true})
+     :handler (fn [response] 
+                (let [profile-name (:userProfileName (:user-data response))
+                      login-password (:userLoginPassword (:user-data response))
+                      processed-passwords (doall
+                                           (mapv (fn [pw]
+                                                   (let [id (:id pw)
+                                                         pName (:pName pw)
+                                                         pContent (:pContent pw)
+                                                         pNotes (:pNotes pw)]
+                                                     {:id id :pName pName :pContent pContent :pNotes pNotes}))
+                                                 (:passwords (:user-data response))))]
                   (reset! user-state {:userProfileName profile-name
                                       :userLoginPassword login-password
                                       :passwords processed-passwords})))
@@ -188,43 +127,60 @@
                       (reset! logged-in false)
                       (js/console.error "Failed obtain user profile:" error))}))
 
-(defn save-current-session [callback]
-  (let [user-profile-name (get @user-state :userProfileName)
-        user-login-password (get @user-state :userLoginPassword)
-        passwords  (get @user-state :passwords)]
-    (ajax/POST "http://localhost:3000/save-current-session"
-      {:params {:userProfileName user-profile-name
-                :userLoginPassword user-login-password
-                :passwords  passwords}
-       :headers {"Content-Type" "text/csv"}
-       :format :json
-       :handler (fn [response]
-                  (callback response))
+(defn export-edn [callback]
+    (ajax/POST "http://localhost:3000/export-edn"
+      {:params {:userProfileName (:userProfileName @user-state)
+                :userLoginPassword (:userLoginPassword @user-state)
+                :passwords  (:passwords @user-state)} 
+       :response-format (ajax/transit-response-format {:keywords? true})
+       :handler (fn [response] 
+                  (callback (:user-data response)))
        :error-handler (fn [error]
-                        (js/console.error "Failed to export csv:" error))})))
+                        (js/console.error "Failed to export edn:" error))}))
+
+(defn import-encrypted-edn [profile-name login-password]
+  (ajax/POST "http://localhost:3000/import-encrypted-edn"
+    {:params {:edn-content @edn-content
+              :userProfileName profile-name
+              :userLoginPassword login-password}
+     :response-format (ajax/transit-response-format {:keywords? true})
+     :handler (fn [response]
+                (reset! user-state {:userProfileName (:userProfileName (:user-data response))
+                                    :userLoginPassword (:userLoginPassword (:user-data response))
+                                    :passwords (:passwords (:user-data response))})
+                (reset! logged-in true))
+     :error-handler (fn [error]
+                      (reset! logged-in false)
+                      (js/console.error "Failed obtain user profile:" error))}))
+
+(defn export-encrypted-edn [callback]
+  (ajax/POST "http://localhost:3000/export-encrypted-edn"
+    {:params {:userProfileName (:userProfileName @user-state)
+              :userLoginPassword (:userLoginPassword @user-state)
+              :passwords  (:passwords @user-state)}
+     :response-format (ajax/transit-response-format {:keywords? true})
+     :handler (fn [response] 
+                (callback (:user-data response)))
+     :error-handler (fn [error]
+                      (js/console.error "Failed to export csv:" error))}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 CRUD                ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (defn create-account [profile-name login-password]
-  (js/console.log "Attempting to create account for:" profile-name)
   (ajax/POST "http://localhost:3000/create-account"
     {:params {:userProfileName @profile-name
               :userLoginPassword @login-password}
-     :format :json
-     :response-format :json
-     :handler (fn [response]
-                (js/console.log "Full response:" (pr-str response))
-                (let [body (or (:body response) response)
-                      _ (js/console.log "Body:" (pr-str body))]
-                  (if (and (map? body) (contains? body "userProfileName"))
-                    (do
-                      (swap! user-state merge {:userProfileName (get body "userProfileName")
-                                               :userLoginPassword (get body "userLoginPassword")
-                                               :passwords (get body "passwords")})
-                      (js/console.log "Updated user-state:" (pr-str @user-state)))
-                    (js/console.error "Unexpected response format:" (pr-str body)))))
+     :response-format (ajax/transit-response-format {:keywords? true})
+     :handler (fn [response] 
+                (let [user-profile (:user-profile response)]
+                  (if user-profile
+                    (swap! user-state merge
+                           {:userProfileName (:userProfileName user-profile)
+                            :userLoginPassword (:userLoginPassword user-profile)
+                            :passwords (:passwords user-profile)})
+                    (js/console.error "Unexpected response format:" response))))
      :error-handler (fn [error]
                       (js/console.error "Failed to create account:" error))}))
 
@@ -240,12 +196,12 @@
       (reset! error-message "")
       (js/setTimeout  ;Ensure csv-content is set before making request
        (fn []
-         (import-encrypted-csv @profile-name @login-password)) ;Make API request
+         (import-encrypted-edn @profile-name @login-password)) ;Make API request
        100)
       (reset! logged-in true))
     (reset! error-message "All fields must be filled in")))
 
-(defn handle-login-submission
+(defn handle-login-unencrypted
   "This function either creates a blank slate user, or draws exising user
    information from CSV using the above 'request-existing-csv' fn."
   [event profile-name login-password login error-message]
@@ -256,12 +212,11 @@
   (if (and (seq @profile-name) (seq @login-password))
     (do
       (reset! error-message "")
-
       (if login
         (do
           (js/setTimeout  ;Ensure csv-content is set before making request
            (fn []
-             (request-existing-csv @profile-name @login-password)) ;Make API request
+             (import-edn @profile-name @login-password))
            100)
           (reset! logged-in true))
         (do
@@ -272,13 +227,14 @@
 (defn add-new-password
   "This function adds a new password in to the front end user atom,
    to be saved to csv prior to exiting."
-  [e form-pName form-pContent form-pNotes error-message]
+  [e pName pContent pNotes error-message]
   (.preventDefault e)
   (let [new-password
-        {:pName form-pName
-         :pContent form-pContent
-         :pNotes form-pNotes}]
-    (if (and (seq form-pName) (seq form-pContent))
+        {:id (inc (:id (last (:passwords @user-state))))
+         :pName pName
+         :pContent pContent
+         :pNotes pNotes}]
+    (if (and (seq pName) (seq pContent))
       (do
         (reset! error-message "")
         (swap! user-state update :passwords conj new-password);swap in the new password
@@ -290,7 +246,7 @@
   (swap! user-state update-in [:passwords]
          (fn [passwords]
            (mapv (fn [password]
-                   (if (= (:pName updated-password) (:pName password))
+                   (if (= (:id updated-password) (:id password))
                      updated-password
                      password))
                  passwords)))
@@ -302,8 +258,7 @@
     (swap! user-state update-in
            [:passwords]
            (fn [passwords]
-             (let [updated-passwords (remove #(= (:pName %) pw-string) passwords)]
-               updated-passwords)))))
+             (vec (remove #(= (:pName %) pw-string) passwords))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;              JS Interop             ;
@@ -320,10 +275,10 @@
     (js/document.execCommand "copy")
     (js/document.body.removeChild textarea)))
 
-(defn download-csv
+(defn download-edn
   "Presents the user the generated csv for download in the browser window."
-  [csv-content filename]
-  (let [blob (js/Blob. #js [csv-content] #js {:type "text/csv;charset=utf-8;"})
+  [edn-content filename]
+  (let [blob (js/Blob. #js [edn-content] #js {:type "application/edn;charset=utf-8;"})
         link (js/document.createElement "a")]
     (set! (.-href link) (js/URL.createObjectURL blob))
     (set! (.-download link) filename)

@@ -1,7 +1,5 @@
 (ns LPM.clj.setup
-  (:require [clojure.java.io :as io]
-            [clojure.data.json :as cjson]
-            [clojure.edn :as edn])
+  (:require [clojure.data.json :as cjson])
   (:import [java.security SecureRandom]
            [java.util Base64]))
 
@@ -27,21 +25,17 @@
 (defn- bytes->hex [bytes]
   (.encodeToString (Base64/getEncoder) bytes))
 
-(defn save-keys [keys]
-  (println "saving keys in setup.clj")
+(defn save-keys [public secret]
   (let [current-time (java.time.Instant/now)
         keys-with-metadata {:setup-complete true
                             :completed-at current-time
-                            :public-key (:public-key keys)
-                            :secret-key (:secret-key keys)}]
+                            :public-key public
+                            :secret-key secret}]
     (spit key-file (cjson/write-str keys-with-metadata))
-    (println "saved?" keys-with-metadata)
     keys-with-metadata))
 
 (defn load-keys []
   (let [file-content (slurp key-file)
-        _ (println "loaded parsed content" file-content)
         parsed-content (cjson/read-str file-content :key-fn keyword)]
-    (println "loaded parsed content" parsed-content)
     {:public-key (base64->bytes (:public-key parsed-content))
      :secret-key (base64->bytes (:secret-key parsed-content))}))

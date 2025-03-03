@@ -1,7 +1,5 @@
 (ns LPM.clj.routes
-  (:require [compojure.core :refer [defroutes POST GET]]
-            [ring.adapter.jetty :refer [run-jetty]]
-            [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
+  (:require [compojure.core :refer [defroutes POST GET routes]] 
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.session.cookie :refer [cookie-store]]
             [ring.middleware.params :refer [wrap-params]]
@@ -12,42 +10,20 @@
 
 (defroutes app-routes
   (POST "/create-account" [] h/create-account)
-  (POST "/request-existing-csv" [] h/request-existing-csv)
-  (POST "/save-current-session" [] h/save-current-session)
-  (POST "/generate-keys" [] h/generate-keys-handler)
-  (POST "/import-encrypted-csv" [] h/import-encrypted)
-  (POST "/export-encrypted-csv" [] h/export-encrypted-csv)
+  (POST "/export-edn" [] h/export-edn)
+  (POST "/export-encrypted-edn" [] h/export-encrypted-edn)
+  (POST "/generate-a-password" [] h/generate-a-password)
+  (POST "/generate-keys" [] h/generate-keys)
+  (POST "/import-edn" [] h/import-edn) 
+  (POST "/import-encrypted-edn" [] h/import-encrypted-edn)
   (POST "/save-keys" [] h/save-keys)
 
-  (GET "/generate-a-password" [] h/generate-a-password)
   (GET "/check-setup-status" [] h/check-setup-status))
 
 (def handler
   (-> app-routes
       (wrap-params)
       (wrap-cors :access-control-allow-origin  #".*"
-                 :access-control-allow-methods [:get :post :delete :options])
+                 :access-control-allow-methods [:get :post])
       (wrap-session {:store (cookie-store)})
-      (wrap-json-body)
-      (wrap-json-response)
       (wrap-authentication auth/auth-backend)))
-
-(defn -main [& args]
-  (run-jetty handler {:port 3000 :join? false}))
-
-(comment (-main)
-         (defonce server (atom nil))
-
-         (defn start-server []
-           (when @server
-             (.stop @server))  ; Stop the existing server if it's running
-           (reset! server (run-jetty #'handler {:port 3000 :join? false})))
-
-         (defn stop-server []
-           (when @server
-             (.stop @server)
-             (reset! server nil)))  ; Clear the server reference after stopping
-
-         (defn restart-server []
-           (stop-server)
-           (start-server)))
