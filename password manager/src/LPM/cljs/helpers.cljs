@@ -5,7 +5,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;              csv functions          ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(def csv-content (r/atom nil))
+(def edn-content (r/atom nil))
 
 (defn read-file [file callback]
   (let [reader (js/FileReader.)]
@@ -18,7 +18,7 @@
 (defn handle-file-selection [file]
   (read-file file
              (fn [content]
-               (reset! csv-content content))))
+               (reset! edn-content content))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                                         ;                 State               ;
@@ -103,9 +103,9 @@
           :error-handler (fn [error]
                            (reject error))})))))
 
-(defn import-csv [profile-name login-password]
-  (ajax/POST "http://localhost:3000/import-csv"
-    {:params {:csv-content @csv-content
+(defn import-edn [profile-name login-password]
+  (ajax/POST "http://localhost:3000/import-edn"
+    {:params {:edn-content @edn-content
               :userProfileName profile-name
               :userLoginPassword login-password} 
      :response-format (ajax/transit-response-format {:keywords? true})
@@ -114,7 +114,7 @@
                       login-password (:userLoginPassword (:user-data response))
                       processed-passwords (doall
                                            (mapv (fn [pw]
-                                                   (let [id (:id pw) 
+                                                   (let [id (:id pw)
                                                          pName (:pName pw)
                                                          pContent (:pContent pw)
                                                          pNotes (:pNotes pw)]
@@ -127,8 +127,8 @@
                       (reset! logged-in false)
                       (js/console.error "Failed obtain user profile:" error))}))
 
-(defn export-csv [callback]
-    (ajax/POST "http://localhost:3000/export-csv"
+(defn export-edn [callback]
+    (ajax/POST "http://localhost:3000/export-edn"
       {:params {:userProfileName (:userProfileName @user-state)
                 :userLoginPassword (:userLoginPassword @user-state)
                 :passwords  (:passwords @user-state)} 
@@ -136,36 +136,25 @@
        :handler (fn [response] 
                   (callback (:user-data response)))
        :error-handler (fn [error]
-                        (js/console.error "Failed to export csv:" error))}))
+                        (js/console.error "Failed to export edn:" error))}))
 
-(defn import-encrypted-csv [profile-name login-password]
-  (ajax/POST "http://localhost:3000/import-encrypted-csv"
-    {:params {:csv-content @csv-content
+(defn import-encrypted-edn [profile-name login-password]
+  (ajax/POST "http://localhost:3000/import-encrypted-edn"
+    {:params {:edn-content @edn-content
               :userProfileName profile-name
               :userLoginPassword login-password}
      :response-format (ajax/transit-response-format {:keywords? true})
      :handler (fn [response]
-                (let [profile-name (:userProfileName (:user-data response))
-                      login-password (:userLoginPassword (:user-data response))
-                      processed-passwords (doall
-                                           (mapv
-                                            (fn [pw]
-                                              (let [id (:id pw)
-                                                    pName (:pName pw)
-                                                    pContent (:pContent pw)
-                                                    pNotes (:pNotes pw)]
-                                                {:id id :pName pName :pContent pContent :pNotes pNotes}))
-                                            (:passwords (:user-data response))))]
-                  (reset! user-state {:userProfileName profile-name
-                                      :userLoginPassword login-password
-                                      :passwords processed-passwords}))
+                (reset! user-state {:userProfileName (:userProfileName (:user-data response))
+                                    :userLoginPassword (:userLoginPassword (:user-data response))
+                                    :passwords (:passwords (:user-data response))})
                 (reset! logged-in true))
      :error-handler (fn [error]
                       (reset! logged-in false)
                       (js/console.error "Failed obtain user profile:" error))}))
 
-(defn export-encrypted-csv [callback]
-  (ajax/POST "http://localhost:3000/export-encrypted-csv"
+(defn export-encrypted-edn [callback]
+  (ajax/POST "http://localhost:3000/export-encrypted-edn"
     {:params {:userProfileName (:userProfileName @user-state)
               :userLoginPassword (:userLoginPassword @user-state)
               :passwords  (:passwords @user-state)}
@@ -207,7 +196,7 @@
       (reset! error-message "")
       (js/setTimeout  ;Ensure csv-content is set before making request
        (fn []
-         (import-encrypted-csv @profile-name @login-password)) ;Make API request
+         (import-encrypted-edn @profile-name @login-password)) ;Make API request
        100)
       (reset! logged-in true))
     (reset! error-message "All fields must be filled in")))
@@ -227,7 +216,7 @@
         (do
           (js/setTimeout  ;Ensure csv-content is set before making request
            (fn []
-             (import-csv @profile-name @login-password))
+             (import-edn @profile-name @login-password))
            100)
           (reset! logged-in true))
         (do
@@ -286,10 +275,10 @@
     (js/document.execCommand "copy")
     (js/document.body.removeChild textarea)))
 
-(defn download-csv
+(defn download-edn
   "Presents the user the generated csv for download in the browser window."
-  [csv-content filename]
-  (let [blob (js/Blob. #js [csv-content] #js {:type "text/csv;charset=utf-8;"})
+  [edn-content filename]
+  (let [blob (js/Blob. #js [edn-content] #js {:type "application/edn;charset=utf-8;"})
         link (js/document.createElement "a")]
     (set! (.-href link) (js/URL.createObjectURL blob))
     (set! (.-download link) filename)

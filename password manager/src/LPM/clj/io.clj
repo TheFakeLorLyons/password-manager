@@ -1,5 +1,6 @@
 (ns LPM.clj.io
   (:require [clojure.data.csv :as csv]
+            [clojure.pprint :as pp]
             [clojure.string :as str]
             [LPM.clj.setup :as sup]
             [LPM.clj.sensitive :as sns]
@@ -9,62 +10,69 @@
                                         ;     converting csv data to atom     ;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn read-csv [data]
+(defn read-edn [data]
   (try
-    (let [{:keys [csv-content userProfileName userLoginPassword]} data
-          lines (str/split-lines csv-content)
-          [header & password-lines] lines
-          [existing-username existing-hashed-password] (str/split header #",")]
+    (let [{:keys [edn-content userProfileName userLoginPassword]} data 
+          parsed-info (clojure.edn/read-string edn-content)
+          existing-username (:userProfileName parsed-info)
+          existing-password (:userLoginPassword parsed-info)
+          passwords (:passwords parsed-info)]
       (when (and (= userProfileName existing-username)
                  (auth/authenticate (auth/hash-password userLoginPassword)
-                                    existing-hashed-password))
+                                    existing-password))
         {:userProfileName existing-username
          :userLoginPassword userLoginPassword
-         :passwords (mapv (fn [line]
-                            (let [[id pName pContent pNotes] (str/split line #",")]
-                              {:id (parse-long id)
-                               :pName pName
-                               :pContent pContent
-                               :pNotes pNotes}))
-                          password-lines)}))
-    (catch Exception e
-      (throw (ex-info (str "Error processing CSV:" (ex-message e))
-                      {:id ::csv-failed
-                       :csv-string (:csv-content data)}
+         :passwords (mapv (fn [{:keys [id pName pContent pNotes]}]
+                            {:id id
+                             :pName pName
+                             :pContent pContent
+                             :pNotes pNotes})
+                          passwords)}))
+    (catch Exception e 
+      (throw (ex-info (str "Error processing EDN:" (ex-message e))
+                      {:id ::edn-failed
+                       :edn-content data}
                       e)))))
 
-(defn generate-csv [current-user]
+(defn generate-edn [current-user]
   (let [{:keys [userProfileName userLoginPassword passwords]} current-user
-        password-list (for [{:keys [id pName pContent pNotes]} passwords]
-                        [id pName pContent pNotes])
-        csv-data (cons [userProfileName userLoginPassword] password-list)]
-    (with-out-str
-      (csv/write-csv *out* csv-data))))
+        password-list (mapv (fn [{:keys [id pName pContent pNotes]}]
+                              {:id id
+                               :pName pName
+                               :pContent pContent
+                               :pNotes pNotes})
+                            passwords)
+        edn-map {:userProfileName userProfileName
+                 :userLoginPassword (auth/hash-password userLoginPassword)
+                 :passwords password-list}]
+      (with-out-str (pp/pprint edn-map))))
 
-(defn generate-encrypted-csv [current-user]
+(defn generate-encrypted-edn [current-user]
   (let [keys (sup/load-keys)
         secret-key (:secret-key keys)
-        {:keys [id userProfileName userLoginPassword passwords]} current-user
-        password-list (for [{:keys [id pName pContent pNotes]} passwords]
-                        [id
-                         (sns/encrypt pName secret-key)
-                         (sns/encrypt pContent secret-key)
-                         (sns/encrypt pNotes secret-key)])
-        csv-data (cons [userProfileName userLoginPassword] password-list)]
-    (with-out-str
-      (csv/write-csv *out* csv-data))))
+        {:keys [userProfileName userLoginPassword passwords]} current-user
+        encrypted-passwords (mapv (fn [{:keys [id pName pContent pNotes]}]
+                                    {:id id
+                                     :pName (sns/encrypt pName secret-key)
+                                     :pContent (sns/encrypt pContent secret-key)
+                                     :pNotes (sns/encrypt pNotes secret-key)})
+                                  passwords)
+        edn-map {:userProfileName userProfileName
+                 :userLoginPassword (auth/hash-password userLoginPassword)
+                 :passwords encrypted-passwords}]
+    (with-out-str (pp/pprint edn-map))))
 
-(defn read-encrypted-csv [data]
+(defn read-encrypted-edn [data]
   (try
     (let [keys (sup/load-keys)
           secret-key (:secret-key keys)
-          authenticated-data (read-csv data)]
+          authenticated-data (read-edn data)]
       (when authenticated-data
-        (let [decrypted-passwords (mapv (fn [password-info]
-                                           {:id (:id password-info)
-                                            :pName (sns/decrypt-entry (:pName password-info) secret-key)
-                                            :pContent (sns/decrypt-entry (:pContent password-info) secret-key)
-                                            :pNotes (sns/decrypt-entry (:pNotes password-info) secret-key)})
+        (let [decrypted-passwords (mapv (fn [{:keys [id pName pContent pNotes]}]
+                                           {:id id
+                                            :pName (sns/decrypt-entry pName secret-key)
+                                            :pContent (sns/decrypt-entry pContent secret-key)
+                                            :pNotes (sns/decrypt-entry pNotes secret-key)})
                                          (:passwords authenticated-data))]
           {:userProfileName (:userProfileName authenticated-data)
            :userLoginPassword (:userLoginPassword authenticated-data)

@@ -10,12 +10,12 @@
 
 (defroutes app-routes
   (POST "/create-account" [] h/create-account)
-  (POST "/export-csv" [] h/export-csv)
-  (POST "/export-encrypted-csv" [] h/export-encrypted-csv)
+  (POST "/export-edn" [] h/export-edn)
+  (POST "/export-encrypted-edn" [] h/export-encrypted-edn)
   (POST "/generate-a-password" [] h/generate-a-password)
   (POST "/generate-keys" [] h/generate-keys)
-  (POST "/import-csv" [] h/import-csv) 
-  (POST "/import-encrypted-csv" [] h/import-encrypted)
+  (POST "/import-edn" [] h/import-edn) 
+  (POST "/import-encrypted-edn" [] h/import-encrypted-edn)
   (POST "/save-keys" [] h/save-keys)
 
   (GET "/check-setup-status" [] h/check-setup-status))

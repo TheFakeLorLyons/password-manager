@@ -35,49 +35,50 @@
           (response/bad-request)
           (response/content-type "application/transit+json")))))
 
-(defn export-csv [request]
-  (let [body (from-transit (:body request)) 
-        csv-content (io/generate-csv body)]
-    (try
-      (-> (to-transit {:user-data csv-content
-                       :message "Successfully exported CSV"})
-          (response/response)
-          (response/content-type "text/csv")
-          (response/header "Content-Disposition" "attachment; filename=\"passwords.csv\""))
-      (catch Exception error
-        (-> (to-transit {:error (str "Exporting the CSV failed, error: " error)})
-            (response/bad-request)
-            (response/content-type "text/csv"))))))
-
-(defn import-csv [request]
-  (let [csv-data (from-transit (:body request))]
-  (try
-    (-> (to-transit {:user-data (io/read-csv csv-data)
-                     :message "Successfully imported CSV"})
-        (response/response)
-        (response/content-type "application/transit+json"))
-    (catch Exception error
-      (-> (to-transit {:error (str "Importing the CSV failed, error: " error)})
-          (response/bad-request)
-          (response/content-type "application/transit+json"))))))
-
-(defn export-encrypted-csv [request]
+(defn export-edn [request]
   (let [body (from-transit (:body request))
-        csv-data (io/generate-encrypted-csv body)] 
+        edn-content (io/generate-edn body)]
+    (try
+      (-> (to-transit {:user-data edn-content
+                       :message "Successfully exported EDN"})
+          (response/response)
+          (response/content-type "application/edn")
+          (response/header "Content-Disposition" "attachment; filename=\"passwords.edn\""))
+      (catch Exception error
+        (-> (to-transit {:error (str "Exporting the EDN failed, error: " error)})
+            (response/bad-request)
+            (response/content-type "application/edn"))))))
+
+(defn import-edn [request]
+  (let [edn-data (from-transit (:body request))
+        obtained-user (io/read-edn edn-data)]
+    (try
+      (-> (to-transit {:user-data obtained-user
+                       :message "Successfully imported EDN"})
+          (response/response)
+          (response/content-type "application/edn"))
+      (catch Exception error
+        (-> (to-transit {:error (str "Importing the EDN failed, error: " error)})
+            (response/bad-request)
+            (response/content-type "application/edn"))))))
+
+(defn export-encrypted-edn [request]
+  (let [body (from-transit (:body request))
+        edn-data (io/generate-encrypted-edn body)] 
       (try
-        (-> (to-transit {:user-data csv-data
-                         :message "Successfully exported CSV"})
+        (-> (to-transit {:user-data edn-data
+                         :message "Successfully exported EDN"})
             (response/response)
-            (response/content-type "text/csv")
-            (response/header "Content-Disposition" "attachment; filename=\"encrypted.csv\""))
+            (response/content-type "application/edn")
+            (response/header "Content-Disposition" "attachment; filename=\"encrypted.edn\""))
         (catch Exception error
           (-> (to-transit {:error (str "Exporting the CSV failed, error: " error)})
               (response/bad-request)
-              (response/content-type "text/csv"))))))
+              (response/content-type "application/edn"))))))
 
-(defn import-encrypted [request]
-  (let [csv-data (from-transit (:body request)) 
-        decrypted-data (io/read-encrypted-csv csv-data)]
+(defn import-encrypted-edn [request]
+  (let [edn-data (from-transit (:body request))
+        decrypted-data (io/read-encrypted-edn edn-data)]
     (try
       (-> (to-transit {:user-data decrypted-data
                        :message "Successfully imported CSV"})

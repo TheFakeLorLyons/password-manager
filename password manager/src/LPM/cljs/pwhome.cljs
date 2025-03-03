@@ -21,9 +21,9 @@
     (fn []
       [:div.export-container
        [:button {:on-click (fn []
-                             (help/export-encrypted-csv
-                              (fn [csv-content]
-                                (help/download-csv csv-content "encrypted.csv")
+                             (help/export-encrypted-edn
+                              (fn [edn-content]
+                                (help/download-edn edn-content "encrypted.edn")
                                 (reset! export-success true)
                                 (js/setTimeout #(reset! export-success false) 5000))))}
         [rainbow-export]]
@@ -37,12 +37,12 @@
     (fn []
       [:div.export-container
        [:button {:on-click (fn []
-                             (help/export-csv
-                              (fn [csv-content]
-                                (help/download-csv csv-content "passwords.csv")
+                             (help/export-edn
+                              (fn [edn-content]
+                                (help/download-edn edn-content "passwords.edn")
                                 (reset! export-success true)
                                 (js/setTimeout #(reset! export-success false) 5000))))}
-        "Export CSV"]
+        "Export EDN"]
        (when @export-success
          [:div {:style {:color "#66ff00"
                         :transform "translate(5vh, 0vh)"

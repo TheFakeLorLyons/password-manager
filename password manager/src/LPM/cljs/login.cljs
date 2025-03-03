@@ -21,7 +21,7 @@
                 :id "directory-path"
                 :name "directory-path"
                 :placeholder "Directory Path"
-                :accept ".csv"
+                :accept ".edn"
                 :style { :display "none"}
                 :on-change (fn [e]
                              (let [changed-file (-> e .-target .-files (aget 0))]
