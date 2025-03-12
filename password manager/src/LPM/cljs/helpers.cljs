@@ -229,12 +229,13 @@
    to be saved to csv prior to exiting."
   [e pName pContent pNotes error-message]
   (.preventDefault e)
-  (let [new-password
-        {:id (inc (:id (last (:passwords @user-state))))
-         :pName pName
-         :pContent pContent
-         :pNotes pNotes}]
-    (if (and (seq pName) (seq pContent))
+  (let [gen-id (str (random-uuid))
+        valid? (not (some #(= gen-id (:id %)) (:passwords @user-state)))
+        new-password {:id gen-id
+                      :pName pName
+                      :pContent pContent
+                      :pNotes pNotes}]
+    (if (and (seq pName) (seq pContent) valid?)
       (do
         (reset! error-message "")
         (swap! user-state update :passwords conj new-password);swap in the new password
@@ -242,6 +243,7 @@
         #_(reset! error-message "New password entered!"));change color later
       (reset! error-message "All fields must be filled in"))))
 
+(add-new-password "e" "Name" "PWContent" "Notes" (atom "test"))
 (defn update-password [updated-password]
   (swap! user-state update-in [:passwords]
          (fn [passwords]

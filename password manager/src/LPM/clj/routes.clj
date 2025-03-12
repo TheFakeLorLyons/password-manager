@@ -13,9 +13,9 @@
   (POST "/export-edn" [] h/export-edn)
   (POST "/export-encrypted-edn" [] h/export-encrypted-edn)
   (POST "/generate-a-password" [] h/generate-a-password)
-  (POST "/generate-keys" [] h/generate-keys)
-  (POST "/import-edn" [] h/import-edn) 
+  (POST "/import-edn" [] h/import-edn)
   (POST "/import-encrypted-edn" [] h/import-encrypted-edn)
+  (POST "/generate-keys" [] h/generate-keys)
   (POST "/save-keys" [] h/save-keys)
 
   (GET "/check-setup-status" [] h/check-setup-status))
